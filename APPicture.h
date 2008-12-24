@@ -19,7 +19,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-
 @interface APPicture : NSObject {
   NSString* _title;
   NSString* _description;
