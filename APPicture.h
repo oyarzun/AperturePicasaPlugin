@@ -16,7 +16,6 @@
 //  AperturePicasaPlugin
 //
 //  Created by Eider Oliveira on 15/12/08.
-//
 
 #import <Cocoa/Cocoa.h>
 
