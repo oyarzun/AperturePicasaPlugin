@@ -401,7 +401,6 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   [self setShouldCancelExport:YES];
 }
 
-
 #pragma mark -
 
 #pragma mark Utilities
