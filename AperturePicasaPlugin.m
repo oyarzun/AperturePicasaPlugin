@@ -44,7 +44,7 @@
 - (NSString *)_localizedStringForKey:(NSString *)key defaultValue:(NSString *)value;
 - (void)updateChangeAlbumList;
 - (void)adjustTableInterface;
-- (void)authenticate;
+- (void)authenticate; 
 - (void)authenticateWithSavedData;
 - (void)changeAlbumSelected:(id)sender;
 - (void)showAlbumDetailsWindow:(id)sender;
