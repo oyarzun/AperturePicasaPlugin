@@ -1,0 +1,5 @@
+/Users/eider/Documents/AperturePicasaPlugin/APTableView.m: In function '-[APTableView tableView:heightOfRow:]':
+/Users/eider/Documents/AperturePicasaPlugin/APTableView.m:16: error: 'MyTableView' undeclared (first use in this function)
+/Users/eider/Documents/AperturePicasaPlugin/APTableView.m:16: error: (Each undeclared identifier is reported only once
+/Users/eider/Documents/AperturePicasaPlugin/APTableView.m:16: error: for each function it appears in.)
+/Users/eider/Documents/AperturePicasaPlugin/APTableView.m:22: error: 'MyArrayController' undeclared (first use in this function)
