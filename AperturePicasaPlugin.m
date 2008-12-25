@@ -33,7 +33,7 @@
 - (void)setAlbumFetchTicket:(GDataServiceTicket *)ticket;
 - (void)fetchAllAlbums;
 - (void)_uploadNextImage;
-- (BOOL)uploadPhoto:(APPicture *)image;
+- (BOOL)uploadPhoto:(APPicture *)picture;
 - (GDataServiceGooglePicasaWeb *)picasaWebService;
 - (GDataFeedPhotoUser *)albumFeed;
 - (void)setAlbumFeed:(GDataFeedPhotoUser *)feed;
@@ -160,7 +160,6 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 - (NSView *)settingsView
 {
 	if (nil == settingsView) {
-    NSLog(@"Loading Nib file");
     // Load the nib using NSNib, and retain the array of top-level objects so we
     // can release them properly in dealloc
     NSBundle *myBundle = [NSBundle bundleForClass:[self class]];
@@ -170,7 +169,6 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     }
     [myNib release];
   }
-  NSLog(@" settingsView == %X", settingsView);
 	return settingsView;
 }
 
@@ -221,7 +219,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 }
 
 - (void)tableViewSelectionIsChanging:(NSNotification *)aNotification {
-  NSLog(@"Selected image = %@", [[[self imageList] objectAtIndex:[imageTableView selectedRow]] title]);
+  NSLog(@"Selected picture = %@", [[[self imageList] objectAtIndex:[imageTableView selectedRow]] title]);
 }
 
 #pragma mark
@@ -285,7 +283,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 - (void)exportManagerShouldBeginExport
 {
-  // Before telling Aperture to begin generating image data, test the connection using the
+  // Before telling Aperture to begin generating picture data, test the connection using the
   // user-entered values
   NSLog(@"exportManagerShouldBeginExport to album %@", [_selectedAlbum title]);
   if (_authenticated && _selectedAlbum) {
@@ -328,16 +326,16 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 - (void)exportManagerWillExportImageAtIndex:(unsigned)index
 {
 	// Nothing to do here - this is just a confirmation that we returned YES above. We could
-	// check to make sure we get confirmation messages for every image.
+	// check to make sure we get confirmation messages for every picture.
   //NSLog(@"exportManagerWillExportImageAtIndex: %d", index);
 }
 
 - (BOOL)exportManagerShouldWriteImageData:(NSData *)imageData toRelativePath:(NSString *)path forImageAtIndex:(unsigned)index
 {
 #if 0
-  APPicture *image = [[self imageList] objectAtIndex:index];
-  [image setData:imageData];
-  [self uploadPhoto:image];
+  APPicture *picture = [[self imageList] objectAtIndex:index];
+  [picture setData:imageData];
+  [self uploadPhoto:picture];
 	// Increment the current progress
 	[self lockProgress];
 	exportProgress.currentValue++;
@@ -360,9 +358,9 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 	
 	// Save the paths of all the images that Aperture has exported
 	NSString *imagePath = [NSString stringWithFormat:@"%@%@", tempDirectoryPath, relativePath];
-  APPicture *image = [[self imageList] objectAtIndex:index];
-  [image setPath:imagePath];
-	[exportedImages addObject:image];
+  APPicture *picture = [[self imageList] objectAtIndex:index];
+  [picture setPath:imagePath];
+	[exportedImages addObject:picture];
 	
 	// Increment the current progress
 	[self lockProgress];
@@ -407,7 +405,6 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 - (void)threadedReloadImageList
 {
-  NSLog(@"loading images thread");
   // since this method should be run in a seperate background
   // thread, we need to create our own NSAutoreleasePool, then
   // release it at the end.
@@ -426,27 +423,29 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     NSImage* thumbnail = [image_dict objectForKey:kExportKeyThumbnailImage];
     if ([thumbnail isValid])
     {
-      // drawing the entire, full-sized image every time the table view
+      // drawing the entire, full-sized picture every time the table view
       // scrolls is way too slow, so instead will draw a thumbnail version
       // into a separate NSImage, which acts as a cache
       
       // create a new APPicture
       APPicture* picture = [[APPicture alloc] init];
       
-      // set the path of the on-disk image and our cache instance
+      // set the path of the on-disk picture and our cache instance
       NSString* caption = [image_properties objectForKey:@"Caption/Abstract"];
       if (caption && [caption length] > 0) {
-        [picture setTitle:caption];
-        [picture setDescription:[image_dict objectForKey:kExportKeyVersionName]];
+        [picture setDescription:caption];
       } else {
-        [picture setTitle:[image_dict objectForKey:kExportKeyVersionName]];
+        [picture setDescription:[image_dict objectForKey:kExportKeyVersionName]];
       }
+      [picture setTitle:[image_dict objectForKey:kExportKeyVersionName]];
+
       // Use the project name as a hint for the album name
       if (_projectName == nil) {
         _projectName = [[image_dict objectForKey:kExportKeyProjectName] retain];
       }
-      [picture setKeywords:[image_properties objectForKey:@"Keywords"]];
-      //NSLog(@"image_dict: %@", [image_dict description]);
+      NSString* keywords_string = [image_properties objectForKey:@"Keywords"];
+      NSArray* keywords_array = [keywords_string componentsSeparatedByString:@", "];
+      [picture setKeywords:keywords_array];
       [picture setDefaultThumbnail:thumbnail];
       
       // add to the APPicture array
@@ -455,7 +454,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
       // adding an object to an array retains it, so we can release our reference.
       [picture release];
     } else {
-      NSLog(@"Version %@ isn't found an image", [image_dict objectForKey:kExportKeyVersionName]);
+      NSLog(@"Version %@ isn't found an picture", [image_dict objectForKey:kExportKeyVersionName]);
     }
 //    
 //    // now release the dictionary we received.
@@ -638,14 +637,12 @@ static const char kPicasaPath[]  = "data/feed/api/all";
                       NSDefaultRunLoopMode, NSModalPanelRunLoopMode, nil];
     [service setRunLoopModes:modes];
   }
-  NSLog(@"setting credentials %@", _username);
   // update the username/password each time the service is requested
   if ([_username length] && [_password length]) {
     [service setUserCredentialsWithUsername:_username password:_password];
   } else {
     [service setUserCredentialsWithUsername:nil password:nil];
   }
-  NSLog(@"returning service username %@", [service username]);
   
   return service;
 }
@@ -750,7 +747,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   unsigned long long quotaLimit = [[feed quotaLimit] unsignedLongLongValue];
   if (!quotaLimit) quotaLimit = 1;
   unsigned long long quotaPct = (quotaUsed*100/quotaLimit);
-  NSLog(@"quota used %ld quota limit %ld = %ld", quotaUsed, quotaLimit, quotaPct);
+  NSLog(@"quota used %ld quota limit %qu = %qu", quotaUsed, quotaLimit, quotaPct);
   [self setQuotaUsage:quotaPct];
   [self setUsername:[feed username]];
   
@@ -861,13 +858,13 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 	}
 	else
 	{
-		// Read in our image data
-    APPicture *image =  [exportedImages objectAtIndex:0];
-    if ([self uploadPhoto:image] == NO) {
+		// Read in our picture data
+    APPicture *picture =  [exportedImages objectAtIndex:0];
+    if ([self uploadPhoto:picture] == NO) {
 			// Exit when there's an error like this
       NSString *format = [self _localizedStringForKey:@"fileReadErrorFormat"
                                          defaultValue:@"There was an error reading %@."];
-			NSString *errorMessage = [NSString stringWithFormat:format, [[image path] lastPathComponent]];
+			NSString *errorMessage = [NSString stringWithFormat:format, [[picture path] lastPathComponent]];
 			NSString *informativeText = @"";
 			NSAlert *alert = [NSAlert alertWithMessageText:errorMessage
                                        defaultButton:@"OK"
@@ -881,55 +878,43 @@ static const char kPicasaPath[]  = "data/feed/api/all";
       return;
     }
     [self lockProgress];
-    exportProgress.message = [[NSString stringWithFormat:@"Step 2 of 2: Uploading Image %d / %d",
+    exportProgress.message = [[NSString stringWithFormat:@"Step 2 of 2: Uploading picture %d / %d",
                                ++_uploadedCount, [_exportManager imageCount]] retain];
     [self unlockProgress];
     
 	}
 }
 
-- (BOOL)uploadPhoto:(APPicture*)image {
-  NSLog(@"Loading picture %@ from %@", [image title], [image path]);
-  if ([image data]) {
+- (BOOL)uploadPhoto:(APPicture*)picture {
+  NSLog(@"Loading picture %@ at %@", [picture title], [picture path]);
+  if ([picture data]) {
     // make a new entry for the photo
     GDataEntryPhoto *newEntry = [GDataEntryPhoto photoEntry];
       
     // set a title, description, and timestamp
-    [newEntry setTitleWithString:[image title]];
-    [newEntry setPhotoDescriptionWithString:[image description]];    
+    [newEntry setPhotoDescriptionWithString:[picture description]];    
     [newEntry setTimestamp:[GDataPhotoTimestamp timestampWithDate:[NSDate date]]];
+    [newEntry setClient:@"Aperture"];
     
-    NSEnumerator *enumerator = [[[image keywords] componentsSeparatedByString:@", "]
-                                objectEnumerator];
-    NSString *keyword;
-    while (keyword = [enumerator nextObject])
-    {
-      GDataCategory *category = [GDataCategory categoryWithLabel:keyword];
-      NSLog(@"%@ keyword %@ category %@", [image title], keyword, [category description]);
-      [newEntry addCategory:category];
-    }
-    
-    //[newEntry setCategories:[[image keywords] componentsSeparatedByString:@","]];
-
     // attach the NSData and set the MIME type for the photo
-    [newEntry setPhotoData:[image data]];
+    [newEntry setPhotoData:[picture data]];
     
-    NSString *mimeType = [GDataEntryBase MIMETypeForFileAtPath:[image path]
-                                               defaultMIMEType:@"image/jpeg"];
+    NSString *mimeType = [GDataEntryBase MIMETypeForFileAtPath:[picture path]
+                                               defaultMIMEType:@"picture/jpeg"];
     [newEntry setPhotoMIMEType:mimeType];
     
     // get the feed URL for the album we're inserting the photo into
     NSURL *feedURL = [[_selectedAlbum feedLink] URL];
     
-    // make service tickets call back into our upload progress selector
     GDataServiceGooglePicasaWeb *service = [self picasaWebService];
     
+    // make service tickets call back into our upload progress selector
     SEL progressSel = @selector(uploadProgress:hasDeliveredByteCount:ofTotalByteCount:);
     [service setServiceUploadProgressSelector:progressSel];
     
     // insert the entry into the album feed
     GDataServiceTicket *ticket;
-    NSLog(@"inserting image in %@", [feedURL description]);
+    NSLog(@"inserting picture in %@", [feedURL description]);
     // If Aperture cancels, we immediately tell it to go ahead - but some callbacks may still
     // be running. Retain ourself so we can return from the callbacks and clean up correctly.
     [self retain]; 
@@ -941,8 +926,8 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     // no need for future tickets to monitor progress
     [service setServiceUploadProgressSelector:nil];
   } else {
-    NSString *photoName = [[image path] lastPathComponent];
-    // nil data from photo file
+    NSString *photoName = [[picture path] lastPathComponent];
+    // nil data from photo file.
     NSBeginAlertSheet(@"Cannot get photo file data", nil, nil, nil,
                       [_exportManager window], nil, nil,
                       nil, nil, @"Could not read photo file: %@", photoName);   
@@ -954,7 +939,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 - (void)uploadProgress:(GDataProgressMonitorInputStream *)stream
  hasDeliveredByteCount:(unsigned long long)numberOfBytesWritten
       ofTotalByteCount:(unsigned long long)dataLength {
-  NSLog(@"uploadProgress: %d/%d", numberOfBytesWritten, dataLength);
+  //NSLog(@"uploadProgress: %qu/%qu", numberOfBytesWritten, dataLength);
   [self lockProgress];
   exportProgress.currentValue = numberOfBytesWritten;
   exportProgress.totalValue = dataLength;
@@ -965,14 +950,29 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 - (void)addPhotoTicket:(GDataServiceTicket *)ticket finishedWithEntry:(GDataEntryPhoto *)photoEntry
 {
   [self release]; // Remove the retained.
-  NSLog(@"Added photo %@", [[photoEntry title] stringValue]);
+  NSLog(@"!!!!!!!!!!Added photo %@", [[photoEntry title] stringValue]);
 
-  // We may be run without disk image writing. if we are saving at disk, exportedImages cound > 0.
+  // We may be run without disk picture writing. if we are saving at disk, exportedImages cound > 0.
   if ([exportedImages count] > 0) {
+    GDataServiceGooglePicasaWeb *service = [self picasaWebService];
+    NSURL *postURL = [[photoEntry feedLink] URL];
+
+    // Get the last uploaded picture.
+    APPicture *picture = [exportedImages objectAtIndex:0];
+
+    // Add tags. Let's ignore the result.
+    NSString *keyword = [[picture keywords]componentsJoinedByString:@","];
+    GDataEntryPhotoTag* tag = [GDataEntryPhotoTag tagEntryWithString:keyword];
+    NSLog(@"Adding %@ to %@", [tag description], [postURL description]);
+    [service fetchPicasaWebEntryByInsertingEntry:tag
+                                      forFeedURL:postURL
+                                        delegate:self
+                               didFinishSelector:nil
+                                 didFailSelector:nil];
+        
     // Delete the last uploaded file
     NSFileManager *fileManager = [NSFileManager defaultManager];
-    APPicture *image = [exportedImages objectAtIndex:0];
-    NSString *imagePath = [image path];
+    NSString *imagePath = [picture path];
     [fileManager removeFileAtPath:imagePath handler:nil];
     [exportedImages removeObjectAtIndex:0];
     
@@ -986,10 +986,10 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   [self release]; // Remove the retained.
   NSLog(@"Added photo %@ failed", error);
   if ([self shouldCancelExport] == NO) {
-    APPicture *image = [exportedImages objectAtIndex:0];
+    APPicture *picture = [exportedImages objectAtIndex:0];
     NSString *format = [self _localizedStringForKey:@"uploadErrorFormat"
                                        defaultValue:@"There was an error uploading %@."];
-    NSString *errorMessage = [NSString stringWithFormat:format, [[image path] lastPathComponent]];
+    NSString *errorMessage = [NSString stringWithFormat:format, [[picture path] lastPathComponent]];
     NSAlert *alert = [NSAlert alertWithMessageText:errorMessage
                                      defaultButton:[self _localizedStringForKey:@"OK"
                                                                    defaultValue:@"OK"]
