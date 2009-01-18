@@ -86,14 +86,14 @@
   [oldDefaultThumbnail release];
 }
 
-- (NSString*)keywords 
+- (NSArray*)keywords 
 {
   return _keywords;  
 }
-- (void)setKeywords:(NSString*)aValue
+- (void)setKeywords:(NSArray*)aValue
 {
-  //NSLog(@"Setting keywords: %@", aValue);
-  NSString *oldKeywords = _keywords;
+  NSLog(@"Setting keywords: %@", [aValue description]);
+  NSArray *oldKeywords = _keywords;
   _keywords = [aValue copy];
   [oldKeywords release];
 }

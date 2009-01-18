@@ -93,7 +93,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 		_progressLock = [[NSLock alloc] init];
 		
 		// Create our temporary directory
-		tempDirectoryPath = [[NSString stringWithFormat:@"%@/AperturePicasaPluin/",
+		tempDirectoryPath = [[NSString stringWithFormat:@"%@/AperturePicasaPlugin/",
                           NSTemporaryDirectory()] retain];
 		
 		// If it doesn't exist, create it
@@ -413,7 +413,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   // the list of images we'll loaded from this directory
   NSMutableArray* imageList = [[NSMutableArray alloc] init];
   
-  // loop through each file name at this locaiton
+  // loop through each file name at this location
   int imageCount = [_exportManager imageCount];
   
   for (int i = 0; i < imageCount && [self shouldCancelExport] == NO; i++) {
@@ -820,16 +820,16 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   
 }
   
-// photo added successfully
+// Successfully added album
 - (void)addAlbumTicket:(GDataServiceTicket *)ticket
      finishedWithEntry:(GDataEntryPhotoAlbum *)albumEntry
 {
   [self release]; // Remove the retained.
   NSLog(@"album created!!!");
   // tell the user that the add worked
-  NSBeginAlertSheet(@"Added Photo", nil, nil, nil,
+  NSBeginAlertSheet(@"Success", nil, nil, nil,
                     [_exportManager window], nil, nil,
-                    nil, nil, @"Album added: %@", 
+                    nil, nil, @"Added album %@.", 
                     [[albumEntry title] stringValue]);
   _selectedAlbum = [albumEntry retain];
   [self updateChangeAlbumList];
@@ -895,6 +895,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     [newEntry setPhotoDescriptionWithString:[picture description]];    
     [newEntry setTimestamp:[GDataPhotoTimestamp timestampWithDate:[NSDate date]]];
     [newEntry setClient:@"Aperture"];
+    [newEntry setTitleWithString:[picture title]];
     
     // attach the NSData and set the MIME type for the photo
     [newEntry setPhotoData:[picture data]];

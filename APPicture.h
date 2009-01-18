@@ -22,7 +22,7 @@
 @interface APPicture : NSObject {
   NSString* _title;
   NSString* _description;
-  NSString* _keywords;
+  NSArray* _keywords;  // Array of NSStrings
   NSImage* _defaultThumbnail;
   BOOL _uploadExifInformation;
   NSData *_data;
@@ -40,8 +40,8 @@
 - (NSImage*)defaultThumbnail;
 - (void)setDefaultThumbnail:(NSImage*)aValue;
 
-- (NSString*)keywords;
-- (void)setKeywords:(NSString*)aValue;
+- (NSArray*)keywords;
+- (void)setKeywords:(NSArray*)aValue;
 
 - (BOOL)uploadExifInformation;
 - (void)setUploadExifInformation:(BOOL)aValue;
