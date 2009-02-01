@@ -327,10 +327,13 @@
 					ppc,
 					i386,
 				);
+				DEPLOYMENT_LOCATION = YES;
 				FRAMEWORK_SEARCH_PATHS = "/Library/Frameworks//**";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_GC = unsupported;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INSTALL_PATH = "$(HOME)/Library/Application Support/Aperture/Plug-Ins/Export/";
 				PREBINDING = NO;
 				SDKROOT = macosx10.4;
 			};
