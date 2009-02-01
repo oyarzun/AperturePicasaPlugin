@@ -951,7 +951,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 - (void)addPhotoTicket:(GDataServiceTicket *)ticket finishedWithEntry:(GDataEntryPhoto *)photoEntry
 {
   [self release]; // Remove the retained.
-  NSLog(@"!!!!!!!!!!Added photo %@", [[photoEntry title] stringValue]);
+  NSLog(@"!!!!!!!!Added photo %@", [[photoEntry title] stringValue]);
 
   // We may be run without disk picture writing. if we are saving at disk, exportedImages cound > 0.
   if ([exportedImages count] > 0) {
@@ -961,16 +961,18 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     // Get the last uploaded picture.
     APPicture *picture = [exportedImages objectAtIndex:0];
 
-    // Add tags. Let's ignore the result.
-    NSString *keyword = [[picture keywords]componentsJoinedByString:@","];
-    GDataEntryPhotoTag* tag = [GDataEntryPhotoTag tagEntryWithString:keyword];
-    NSLog(@"Adding %@ to %@", [tag description], [postURL description]);
-    [service fetchPicasaWebEntryByInsertingEntry:tag
-                                      forFeedURL:postURL
-                                        delegate:self
-                               didFinishSelector:nil
-                                 didFailSelector:nil];
-        
+    if ([[picture keywords] count] > 0) {
+      NSString *keyword = [[picture keywords]componentsJoinedByString:@","];
+      GDataEntryPhotoTag* tag = [GDataEntryPhotoTag tagEntryWithString:keyword];
+      NSLog(@"Adding %@ to %@", [tag description], [postURL description]);
+      // Add tags. Let's ignore the result.
+      [service fetchPicasaWebEntryByInsertingEntry:tag
+                                        forFeedURL:postURL
+                                          delegate:self
+                                 didFinishSelector:nil
+                                   didFailSelector:nil];
+      
+    }
     // Delete the last uploaded file
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *imagePath = [picture path];
