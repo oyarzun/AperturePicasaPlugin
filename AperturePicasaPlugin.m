@@ -627,7 +627,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   static GDataServiceGooglePicasaWeb* service = nil;
   
   if (!service) {
-    [GDataHTTPFetcher setIsLoggingEnabled:true];
+    [GDataHTTPFetcher setIsLoggingEnabled:false];
     service = [[GDataServiceGooglePicasaWeb alloc] init];
     
     [service setUserAgent:@"AperturePicasaPlugin-1.0"];
