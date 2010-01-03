@@ -317,7 +317,6 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INSTALL_PATH = "$(HOME)/Library/Application Support/Aperture/Plug-Ins/Export/";
 				PREBINDING = NO;
-				SDKROOT = macosx10.4;
 			};
 			name = Debug;
 		};
@@ -337,7 +336,6 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INSTALL_PATH = "$(HOME)/Library/Application Support/Aperture/Plug-Ins/Export/";
 				PREBINDING = NO;
-				SDKROOT = macosx10.4;
 			};
 			name = Release;
 		};

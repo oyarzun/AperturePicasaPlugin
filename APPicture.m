@@ -22,6 +22,7 @@
 
 
 @implementation APPicture
+
 - (id)init
 {
   if (self = [super init])
@@ -30,6 +31,9 @@
     [self setDescription:@""];
     [self setDefaultThumbnail:nil];
     [self setPath:nil];
+	
+	[self setUploadDescription:YES];
+	[self setUploadKeywords:YES];
   }
   return self;
 }
@@ -74,6 +78,16 @@
   [oldDescription release];
 }
 
+- (BOOL)uploadDescription
+{
+	return _uploadDescription;
+}
+
+- (void)setUploadDescription:(BOOL)aValue
+{
+	_uploadDescription = aValue;
+}
+
 - (NSImage*)defaultThumbnail
 {
   return _defaultThumbnail;
@@ -88,7 +102,7 @@
 
 - (NSArray*)keywords 
 {
-  return _keywords;  
+  return _keywords;
 }
 
 - (void)setKeywords:(NSArray*)aValue
@@ -99,13 +113,23 @@
   [oldKeywords release];
 }
 
+- (BOOL)uploadKeywords
+{
+	return _uploadKeywords;
+}
+
+- (void)setUploadKeywords:(BOOL)aValue
+{
+	_uploadKeywords = aValue;
+}
+
 - (BOOL)uploadExifInformation
 {
   return _uploadExifInformation;
 }
 - (void)setUploadExifInformation:(BOOL)aValue
 {
-  _uploadExifInformation = TRUE;
+  _uploadExifInformation = aValue;
 }
 
 - (void)setData:(NSData*)aValue

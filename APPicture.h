@@ -25,6 +25,8 @@
   NSArray* _keywords;  // Array of NSStrings
   NSImage* _defaultThumbnail;
   BOOL _uploadExifInformation;
+  BOOL _uploadDescription;
+  BOOL _uploadKeywords;
   NSData *_data;
   NSString *_path;
 }
@@ -37,11 +39,17 @@
 - (NSString*)description;
 - (void)setDescription:(NSString*)aValue;
 
+- (BOOL)uploadDescription;
+- (void)setUploadDescription:(BOOL)aValue;
+
 - (NSImage*)defaultThumbnail;
 - (void)setDefaultThumbnail:(NSImage*)aValue;
 
 - (NSArray*)keywords;
 - (void)setKeywords:(NSArray*)aValue;
+
+- (BOOL)uploadKeywords;
+- (void)setUploadKeywords:(BOOL)aValue;
 
 - (BOOL)uploadExifInformation;
 - (void)setUploadExifInformation:(BOOL)aValue;

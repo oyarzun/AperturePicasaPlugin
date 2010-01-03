@@ -54,9 +54,15 @@
 
 // runs through all the images in the given folder
 // (using pathForImages) and sets them as the new
-// array for imageList. intended to be run in the
+// array for imageList. Sets all data except thumbnail
+
+- (void)reloadImageList;
+
+// Runs through all the images given by _exportManager
+// and sets the thumbnails in the imaglist created
+// by reloadImageList. intended to be run in the
 // background, so sets up an NSAutoreleasePool.
-- (void)threadedReloadImageList;
+- (void)threadLoadThumbNails;
 
 @end
 
@@ -184,11 +190,20 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 - (void)willBeActivated
 {
-	// Nothing to do here
-  NSLog(@"willBeActivacted for %d images", [_exportManager imageCount]);
-  [self setLoadingImages:YES];
-  [self adjustTableInterface];
-  [NSThread detachNewThreadSelector:@selector(threadedReloadImageList) toTarget:self withObject:nil];
+	NSLog(@"willBeActivacted for %d images", [_exportManager imageCount]);
+	[self setLoadingImages:YES];
+	[self adjustTableInterface];
+
+	// We have to load the metadata from the main thread because otherwise Aperture only give us metadata for 
+	// images whose metadata has been recently viewed in Aperture. We first load the image metadata minus
+	// thumbnails since loading thumbnails is slow and we want the user to be able to start working asap.
+	// We then add the thumbnails in a background thread.
+	
+		// First load the list with all metadata except thumbnails from the main thread:
+	[self reloadImageList];
+		// Then add the Thumbnails in a separate thread
+  [NSThread detachNewThreadSelector:@selector(threadLoadThumbNails) toTarget:self withObject:nil];
+
   [self performSelectorOnMainThread:@selector(authenticateWithSavedData)
                          withObject: nil waitUntilDone: NO];
 }
@@ -380,7 +395,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 	
 	// Set up our progress to count uploaded bytes instead of images
 	[self lockProgress];
-  _uploadedCount = 0;
+	_uploadedCount = 0;
 	exportProgress.currentValue = 0;
 	[exportProgress.message autorelease];
 	exportProgress.message = [[self _localizedStringForKey:@"uploadingImages"
@@ -403,79 +418,114 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 #pragma mark Utilities
 
-- (void)threadedReloadImageList
+-(void)threadLoadThumbNails
 {
-  // since this method should be run in a seperate background
-  // thread, we need to create our own NSAutoreleasePool, then
-  // release it at the end.
+	// since this method should be run in a seperate background
+	// thread, we need to create our own NSAutoreleasePool, then
+	// release it at the end.
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-    
-  // the list of images we'll loaded from this directory
-  NSMutableArray* imageList = [[NSMutableArray alloc] init];
-  
+      
   // loop through each file name at this location
   int imageCount = [_exportManager imageCount];
-  
   for (int i = 0; i < imageCount && [self shouldCancelExport] == NO; i++) {
-    NSDictionary* image_dict = [_exportManager propertiesForImageAtIndex:i];
-    NSDictionary* image_properties = [image_dict objectForKey:kExportKeyIPTCProperties];
-    
-    NSImage* thumbnail = [image_dict objectForKey:kExportKeyThumbnailImage];
-    if ([thumbnail isValid])
+	NSImage* thumbnail = [_exportManager thumbnailForImageAtIndex:i size: kExportThumbnailSizeThumbnail];
+	if ([thumbnail isValid])
     {
       // drawing the entire, full-sized picture every time the table view
       // scrolls is way too slow, so instead will draw a thumbnail version
       // into a separate NSImage, which acts as a cache
-      
-      // create a new APPicture
-      APPicture* picture = [[APPicture alloc] init];
-      
-      // set the path of the on-disk picture and our cache instance
-      NSString* caption = [image_properties objectForKey:@"Caption/Abstract"];
-      if (caption && [caption length] > 0) {
-        [picture setDescription:caption];
-      } else {
-        [picture setDescription:[image_dict objectForKey:kExportKeyVersionName]];
-      }
-      [picture setTitle:[image_dict objectForKey:kExportKeyVersionName]];
 
-      // Use the project name as a hint for the album name
-      if (_projectName == nil) {
-        _projectName = [[image_dict objectForKey:kExportKeyProjectName] retain];
-      }
-      NSString* keywords_string = [image_properties objectForKey:@"Keywords"];
-      NSArray* keywords_array = [keywords_string componentsSeparatedByString:@", "];
-      [picture setKeywords:keywords_array];
-      [picture setDefaultThumbnail:thumbnail];
-      
-      // add to the APPicture array
-      [imageList addObject:picture];
-      
-      // adding an object to an array retains it, so we can release our reference.
-      [picture release];
-    } else {
-      NSLog(@"Version %@ isn't found an picture", [image_dict objectForKey:kExportKeyVersionName]);
+			// Since performSelectorOnMainThread takes one argument and we need to send two we put our args in a dictionary.
+			// The key is the index for the image and the value is the thumbnail
+		NSDictionary * dict = [NSDictionary dictionaryWithObject: thumbnail forKey: [NSNumber numberWithInt: i]];
+		
+			// sync up with the mainnthread and set the thumbnail
+		[self performSelectorOnMainThread: @selector(setThumbNailFromDict:)
+                           withObject: dict
+                        waitUntilDone: NO];      
+    
+	} 
+	else {
+      NSLog(@"Could not get thumbnail for image with index %d.", i);
     }
-//    
-//    // now release the dictionary we received.
-//    [image_dict release];        
+
   }
-  
-  
-  if ([self shouldCancelExport] == NO) {
-    // we want to actually set the new value in the main thread, to
-    // avoid any mix-ups with Cocoa Bindings
-    [self performSelectorOnMainThread: @selector(setImageList:)
-                           withObject: imageList
-                        waitUntilDone: NO];
-  }
-  
-  [imageList release];
+
+	[self performSelectorOnMainThread: @selector(setDoneLoadingThumbnails:)
+                        withObject: nil
+                        waitUntilDone: NO];      
   
   // remember to release the pool    
   [pool release];
 }
 
+- (void)reloadImageList
+{
+		// Some size for our placeholder image
+	const NSSize kThumbnailSize = {172, 172};
+	
+	// the list of images we'll loaded from this directory
+	NSMutableArray* imageList = [[NSMutableArray alloc] init];
+
+	// loop through each file name at this location
+	int imageCount = [_exportManager imageCount];
+		
+		// We create a placeholder thumbnail. We will replace this with the actual thumbnail
+		// from a backgound thread
+	NSImage * placeHolderThumbNail = [[NSImage alloc] initWithSize: kThumbnailSize];
+	[placeHolderThumbNail setBackgroundColor: [NSColor darkGrayColor]];
+
+	for (int i = 0; i < imageCount && [self shouldCancelExport] == NO; i++) {
+		NSDictionary* image_dict = [_exportManager propertiesWithoutThumbnailForImageAtIndex:i];
+		NSDictionary* image_properties = [image_dict objectForKey:kExportKeyIPTCProperties];
+
+		if ([placeHolderThumbNail isValid])
+		{
+			// create a new APPicture
+			APPicture* picture = [[APPicture alloc] init];
+
+			// set the path of the on-disk picture and our cache instance
+			NSString* caption = [image_properties objectForKey:@"Caption/Abstract"];
+
+			if (caption && [caption length] > 0) {
+				[picture setDescription:caption];
+			} else {
+			   [picture setDescription:[image_dict objectForKey:kExportKeyVersionName]];
+			}
+			
+			[picture setTitle:[image_dict objectForKey:kExportKeyVersionName]];
+
+			// Use the project name as a hint for the album name
+			if (_projectName == nil) {
+				_projectName = [[image_dict objectForKey:kExportKeyProjectName] retain];
+			}
+
+			NSString* keywords_string = [image_properties objectForKey:@"Keywords"];
+			NSArray* keywords_array = [keywords_string componentsSeparatedByString:@", "];
+			[picture setKeywords:keywords_array];
+
+			[picture setDefaultThumbnail:placeHolderThumbNail];
+
+			// add to the APPicture array
+			[imageList addObject:picture];
+
+			// adding an object to an array retains it, so we can release our reference.
+			[picture release];
+		} else {
+			NSLog(@"Version %@ isn't found an picture", [image_dict objectForKey:kExportKeyVersionName]);
+		}
+		//    
+		// now release the dictionary we received.
+		// [image_dict release];        
+	}
+
+	if ([self shouldCancelExport] == NO) {
+		[self setImageList: imageList];
+	}
+
+	[placeHolderThumbNail release];
+	[imageList release];
+}
 
 #pragma mark -
 	// Progress Methods
@@ -892,7 +942,9 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     GDataEntryPhoto *newEntry = [GDataEntryPhoto photoEntry];
       
     // set a title, description, and timestamp
-    [newEntry setPhotoDescriptionWithString:[picture description]];    
+	// If we do not want to set the description we still need to call setPhotoDescriptionWithString 
+	// with an empty string otherwise the caption will get picked up from the IPTC in the image
+	[newEntry setPhotoDescriptionWithString: [picture uploadDescription]  ? [picture description] : @""];    
     [newEntry setTimestamp:[GDataPhotoTimestamp timestampWithDate:[NSDate date]]];
     [newEntry setClient:@"Aperture"];
     [newEntry setTitleWithString:[picture title]];
@@ -961,16 +1013,16 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     // Get the last uploaded picture.
     APPicture *picture = [exportedImages objectAtIndex:0];
 
-    if ([[picture keywords] count] > 0) {
-      NSString *keyword = [[picture keywords]componentsJoinedByString:@","];
-      GDataEntryPhotoTag* tag = [GDataEntryPhotoTag tagEntryWithString:keyword];
-      NSLog(@"Adding %@ to %@", [tag description], [postURL description]);
-      // Add tags. Let's ignore the result.
-      [service fetchPicasaWebEntryByInsertingEntry:tag
-                                        forFeedURL:postURL
-                                          delegate:self
-                                 didFinishSelector:nil
-                                   didFailSelector:nil];
+	if ([picture uploadKeywords] && [[picture keywords] count] > 0) {
+		NSString *keyword = [[picture keywords]componentsJoinedByString:@","];
+		GDataEntryPhotoTag* tag = [GDataEntryPhotoTag tagEntryWithString:keyword];
+		NSLog(@"Adding %@ to %@", [tag description], [postURL description]);
+		// Add tags. Let's ignore the result.
+		[service fetchPicasaWebEntryByInsertingEntry:tag
+										forFeedURL:postURL
+										  delegate:self
+								 didFinishSelector:nil
+								   didFailSelector:nil];
       
     }
     // Delete the last uploaded file
@@ -1048,6 +1100,31 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   return _imageList;
 }
 
+-(void)setDoneLoadingThumbnails:(id)obj
+{
+	[self setLoadingImages: NO];
+}
+
+- (void)setThumbNail:(NSImage*) image forImageatIndex:(int) index
+{
+	[[_imageList objectAtIndex:index] setDefaultThumbnail: image];
+	[imageTableView reloadData];
+}
+
+- (void)setThumbNailFromDict:(NSDictionary *) dict
+{
+	NSArray * allKeys = [dict allKeys];
+
+	NSEnumerator * e = [allKeys objectEnumerator];
+	NSNumber * onekey = [e nextObject];
+		
+	while (onekey) {
+		NSImage * thumb = [dict objectForKey: onekey];
+		[self setThumbNail: thumb forImageatIndex: [onekey intValue]];
+		onekey = [e nextObject];
+	}
+}
+
 - (void)setImageList:(NSArray*)aValue
 {
   NSMutableArray* oldImageList = _imageList;
@@ -1055,7 +1132,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   [oldImageList release];
   
   NSLog(@"Set %d images in list", [_imageList count]);
-  [self setLoadingImages:NO];
+  //[self setLoadingImages:NO];
 }
 
 - (BOOL)loadingImages
