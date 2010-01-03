@@ -606,15 +606,22 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   // Try to get the password from the keychain
   if (saveToKeychain &&
       SecKeychainFindInternetPassword(NULL, strlen(kPicasaDomain), kPicasaDomain, 0, NULL,
-                                      [username lengthOfBytesUsingEncoding:NSUTF8StringEncoding], [username UTF8String], 
+                                      [username lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
+                                      [username UTF8String], 
                                       strlen(kPicasaPath), kPicasaPath, 0, kSecProtocolTypeHTTP,
                                       kSecAuthenticationTypeDefault, &keychainPasswordLength,
                                       (void*)&keychainPassword, NULL) == noErr) {
-    _password = [NSString stringWithCString:keychainPassword encoding:NSUTF8StringEncoding];
-    [passwordField setStringValue:_password];
-    SecKeychainItemFreeContent(NULL, keychainPassword);
-    [self setAddToKeychain:TRUE]; 
     NSLog(@"Found %d bytes of password", keychainPasswordLength);
+    _password = [NSString stringWithUTF8String:keychainPassword];
+        
+    if (_password && [_password length]) {
+      [passwordField setStringValue:_password];
+      [self setAddToKeychain:TRUE]; 
+    } else {
+      NSLog(@"Failed converting cstring password to  nsstring");
+      keychainPasswordLength = 0;  // consider it failure.
+    }
+    SecKeychainItemFreeContent(NULL, keychainPassword);
   }
   if ([username length] == 0 || keychainPasswordLength == 0) {
     [self authenticate];
