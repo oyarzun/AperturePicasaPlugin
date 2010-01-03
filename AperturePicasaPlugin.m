@@ -23,7 +23,7 @@
 #import "AperturePicasaPlugin.h"
 #import <CoreFoundation/CoreFoundation.h>
 #import <CoreServices/CoreServices.h>
-#import "GData/GDataServiceGooglePicasaWeb.h"
+#import "GData/GDataServiceGooglePhotos.h"
 #import "APPicture.h"
 
 #include <Security/Security.h>
@@ -34,9 +34,9 @@
 - (void)fetchAllAlbums;
 - (void)_uploadNextImage;
 - (BOOL)uploadPhoto:(APPicture *)picture;
-- (GDataServiceGooglePicasaWeb *)picasaWebService;
+- (GDataServiceGooglePhotos *)photoService;
 - (GDataFeedPhotoUser *)albumFeed;
-- (void)setAlbumFeed:(GDataFeedPhotoUser *)feed;
+- (void)setAlbumFeed:(GDataFeedBase *)feed;
 - (NSError *)albumFetchError;
 - (void)setAlbumFetchError:(NSError *)error;  
 - (GDataServiceTicket *)albumFetchTicket;
@@ -455,8 +455,8 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   // loop through each file name at this location
   int imageCount = [_exportManager imageCount];
   for (int i = 0; i < imageCount && [self shouldCancelExport] == NO; i++) {
-	NSImage* thumbnail = [_exportManager thumbnailForImageAtIndex:i size: kExportThumbnailSizeThumbnail];
-	if ([thumbnail isValid])
+    NSImage* thumbnail = [_exportManager thumbnailForImageAtIndex:i size: kExportThumbnailSizeThumbnail];
+    if ([thumbnail isValid])
     {
       // drawing the entire, full-sized picture every time the table view
       // scrolls is way too slow, so instead will draw a thumbnail version
@@ -464,20 +464,16 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 			// Since performSelectorOnMainThread takes one argument and we need to send two we put our args in a dictionary.
 			// The key is the index for the image and the value is the thumbnail
-		NSDictionary * dict = [NSDictionary dictionaryWithObject: thumbnail forKey: [NSNumber numberWithInt: i]];
+      NSDictionary * dict = [NSDictionary dictionaryWithObject: thumbnail forKey: [NSNumber numberWithInt: i]];
 		
 			// sync up with the mainnthread and set the thumbnail
-		[self performSelectorOnMainThread: @selector(setThumbNailFromDict:)
-                           withObject: dict
-                        waitUntilDone: NO];      
-    
-	} 
-	else {
+      [self performSelectorOnMainThread: @selector(setThumbNailFromDict:)
+                             withObject: dict
+                          waitUntilDone: NO];      
+    } else {
       NSLog(@"Could not get thumbnail for image with index %d.", i);
     }
-
   }
-
 	[self performSelectorOnMainThread: @selector(setDoneLoadingThumbnails:)
                         withObject: nil
                         waitUntilDone: NO];      
@@ -601,7 +597,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   }
   BOOL saveToKeychain = [defaults boolForKey:kUserDefaultSaveToKeychain];
   
-  char *keychainPassword = "";
+  char *keychainPassword = NULL;
   UInt32 keychainPasswordLength = 0;
   // Try to get the password from the keychain
   if (saveToKeychain &&
@@ -612,8 +608,8 @@ static const char kPicasaPath[]  = "data/feed/api/all";
                                       kSecAuthenticationTypeDefault, &keychainPasswordLength,
                                       (void*)&keychainPassword, NULL) == noErr) {
     NSLog(@"Found %d bytes of password", keychainPasswordLength);
-    _password = [NSString stringWithUTF8String:keychainPassword];
-        
+    _password = [NSString stringWithFormat:@"%*.*s", keychainPasswordLength, keychainPasswordLength, keychainPassword];
+    //NSLog(@"Password: %@", _password);
     if (_password && [_password length]) {
       [passwordField setStringValue:_password];
       [self setAddToKeychain:TRUE]; 
@@ -707,14 +703,14 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 // Private Methods
 #pragma mark Picasa Interface
 
-- (GDataServiceGooglePicasaWeb *)picasaWebService {
-  static GDataServiceGooglePicasaWeb* service = nil;
+- (GDataServiceGooglePhotos *)photoService {
+  static GDataServiceGooglePhotos* service = nil;
   
   if (!service) {
     [GDataHTTPFetcher setIsLoggingEnabled:false];
-    service = [[GDataServiceGooglePicasaWeb alloc] init];
+    service = [[GDataServiceGooglePhotos alloc] init];
     
-    [service setUserAgent:@"AperturePicasaPlugin-1.0"];
+    [service setUserAgent:@"AperturePicasaPlugin-1.1"];
     [service setShouldCacheDatedData:YES];
     [service setServiceShouldFollowNextLinks:YES];
     NSArray *modes = [NSArray arrayWithObjects:
@@ -752,8 +748,8 @@ static const char kPicasaPath[]  = "data/feed/api/all";
      didEndSelector:nil
         contextInfo:nil];
 	
-  GDataServiceGooglePicasaWeb *service = [self picasaWebService];
-  NSURL *feedURL = [GDataServiceGooglePicasaWeb picasaWebFeedURLForUserID:_username
+  GDataServiceGooglePhotos *service = [self photoService];
+  NSURL *feedURL = [GDataServiceGooglePhotos photoFeedURLForUserID:_username
                                                                   albumID:nil
                                                                 albumName:nil
                                                                   photoID:nil
@@ -764,66 +760,55 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   // If Aperture cancels, we immediately tell it to go ahead - but some callbacks may still
   // be running. Retain ourself so we can return from the callbacks and clean up correctly.
   [self retain]; 
-  ticket = [service fetchPicasaWebFeedWithURL:feedURL
-                                     delegate:self
-                            didFinishSelector:@selector(albumListFetchTicket:finishedWithFeed:)
-                              didFailSelector:@selector(albumListFetchTicket:failedWithError:)];
+  ticket = [service fetchFeedWithURL:feedURL
+                            delegate:self
+                   didFinishSelector:@selector(albumListFetchTicket:finishedWithFeed:error:)];
 
   [self setAlbumFetchTicket:ticket];
 }
 
 // finished album list successfully
 - (void)albumListFetchTicket:(GDataServiceTicket *)ticket
-            finishedWithFeed:(GDataFeedPhotoUser *)object {
+            finishedWithFeed:(GDataFeedBase *)feed 
+                       error:(NSError *)error {
   [self release]; // Remove the retained.
 	// Put away the sheet
 	[NSApp endSheet:connectionWindow];
 	[connectionWindow orderOut:self];
   
-  [self setAlbumFeed:object];
-  [self setAlbumFetchError:nil];    
-  [self setAlbumFetchTicket:nil];
-  
-  // load the Change Album pop-up button with the
-  // album entries
-  // TODO(eider): Create a list to hold all album entries
-  [self updateChangeAlbumList];
-  
-  // Set our progress before beginning export activity
-  [self lockProgress];
-  exportProgress.totalValue = [_exportManager imageCount];
-  exportProgress.currentValue = 0;
-  exportProgress.indeterminateProgress = NO;
-  exportProgress.message = [[self _localizedStringForKey:@"preparingImages"
-                                            defaultValue:@"Step 1/2: Preparing Images..."] retain];
-  [self unlockProgress];
-  
-  // we may have got an public access.
-  [self setAuthenticated:([[passwordField stringValue] length] > 0)];
-} 
-
-// failed
-- (void)albumListFetchTicket:(GDataServiceTicket *)ticket
-             failedWithError:(NSError *)error {
-  [self release]; // Remove the retained.
-	// Put away the sheet
-	[NSApp endSheet:connectionWindow];
-	[connectionWindow orderOut:self];
-  
-  [self setAlbumFeed:nil];
+  [self setAlbumFeed:feed];
   [self setAlbumFetchError:error];    
   [self setAlbumFetchTicket:nil];
   
-  NSString *errorMessage = [self _localizedStringForKey:@"albumListFetchFormat" defaultValue:@"There was an error fetching albums."];
-  NSString *informativeText = [error localizedDescription];
-  NSLog(@"Error: %@: %@", errorMessage, informativeText);
-  NSAlert *alert = [NSAlert alertWithMessageText:errorMessage defaultButton:[self _localizedStringForKey:@"OK" defaultValue:@"OK"]
-                                 alternateButton:nil otherButton:nil informativeTextWithFormat:informativeText];
-  [alert setAlertStyle:NSCriticalAlertStyle];
-  [alert runModal];
-  // Try again!
-  [self authenticate];
-}
+  if (!error) {
+    // load the Change Album pop-up button with the
+    // album entries
+    // TODO(eider): Create a list to hold all album entries
+    [self updateChangeAlbumList];
+    
+    // Set our progress before beginning export activity
+    [self lockProgress];
+    exportProgress.totalValue = [_exportManager imageCount];
+    exportProgress.currentValue = 0;
+    exportProgress.indeterminateProgress = NO;
+    exportProgress.message = [[self _localizedStringForKey:@"preparingImages"
+                                              defaultValue:@"Step 1/2: Preparing Images..."] retain];
+    [self unlockProgress];
+    
+    // we may have got an public access.
+    [self setAuthenticated:([[passwordField stringValue] length] > 0)];
+  } else {
+    NSString *errorMessage = [self _localizedStringForKey:@"albumListFetchFormat" defaultValue:@"There was an error fetching albums."];
+    NSString *informativeText = [error localizedDescription];
+    NSLog(@"Error: %@: %@", errorMessage, informativeText);
+    NSAlert *alert = [NSAlert alertWithMessageText:errorMessage defaultButton:[self _localizedStringForKey:@"OK" defaultValue:@"OK"]
+                                   alternateButton:nil otherButton:nil informativeTextWithFormat:informativeText];
+    [alert setAlertStyle:NSCriticalAlertStyle];
+    [alert runModal];
+    // Try again!
+    [self authenticate];
+  }
+} 
 
 - (void)updateChangeAlbumList {
   GDataFeedPhotoUser *feed = [self albumFeed];
@@ -888,7 +873,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
   NSLog(@"getting picasa service");
   
-  GDataServiceGooglePicasaWeb *service = [self picasaWebService];
+  GDataServiceGooglePhotos *service = [self photoService];
   
   NSLog(@"opening ticket");
   // insert the entry into the album feed
@@ -896,41 +881,39 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   // If Aperture cancels, we immediately tell it to go ahead - but some callbacks may still
   // be running. Retain ourself so we can return from the callbacks and clean up correctly.
   [self retain]; 
-  ticket = [service fetchPicasaWebEntryByInsertingEntry:newEntry
-                                             forFeedURL:feedURL
-                                               delegate:self
-                                      didFinishSelector:@selector(addAlbumTicket:finishedWithEntry:)
-                                        didFailSelector:@selector(addAlbumTicket:failedWithError:)];
+  ticket = [service fetchEntryByInsertingEntry:newEntry
+                                    forFeedURL:feedURL
+                                      delegate:self
+                             didFinishSelector:@selector(addAlbumTicket:finishedWithEntry:error:)];
   
 }
   
 // Successfully added album
 - (void)addAlbumTicket:(GDataServiceTicket *)ticket
      finishedWithEntry:(GDataEntryPhotoAlbum *)albumEntry
+                 error:(NSError *)error
 {
   [self release]; // Remove the retained.
-  NSLog(@"album created!!!");
-  // tell the user that the add worked
-  NSBeginAlertSheet(@"Success", nil, nil, nil,
-                    [_exportManager window], nil, nil,
-                    nil, nil, @"Added album %@.", 
-                    [[albumEntry title] stringValue]);
-  _selectedAlbum = [albumEntry retain];
-  [self updateChangeAlbumList];
-} 
-  
-// failure to add photo
-- (void)addAlbumTicket:(GDataServiceTicket *)ticket failedWithError:(NSError *)error {
-  [self release]; // Remove the retained.
+  if (albumEntry) {
+    NSLog(@"album created!!!");
+    // tell the user that the add worked
+    NSBeginAlertSheet(@"Success", nil, nil, nil,
+                      [_exportManager window], nil, nil,
+                      nil, nil, @"Added album %@.", 
+                      [[albumEntry title] stringValue]);
+    _selectedAlbum = [albumEntry retain];
+    [self updateChangeAlbumList];
+  } else {
   NSLog(@"album creation failed!!!");
   NSBeginAlertSheet(@"Add failed", nil, nil, nil,
                     [_exportManager window], nil, nil,
                     nil, nil, @"Album add failed: %@", error);
-}
-  
+  }
+} 
   
 - (void)_uploadNextImage
 {
+
 	if (!exportedImages || ([exportedImages count] == 0))
 	{
 		// There are no more images to upload. We're done.
@@ -942,6 +925,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 	}
 	else
 	{
+    NSLog(@"uploadNextImage: %d images to go", [exportedImages count]);
 		// Read in our picture data
     APPicture *picture =  [exportedImages objectAtIndex:0];
     if ([self uploadPhoto:picture] == NO) {
@@ -980,7 +964,6 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 	// with an empty string otherwise the caption will get picked up from the IPTC in the image
 	[newEntry setPhotoDescriptionWithString: [picture uploadDescription]  ? [picture description] : @""];    
     [newEntry setTimestamp:[GDataPhotoTimestamp timestampWithDate:[NSDate date]]];
-    [newEntry setClient:@"Aperture"];
     [newEntry setTitleWithString:[picture title]];
     
     // attach the NSData and set the MIME type for the photo
@@ -993,7 +976,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     // get the feed URL for the album we're inserting the photo into
     NSURL *feedURL = [[_selectedAlbum feedLink] URL];
     
-    GDataServiceGooglePicasaWeb *service = [self picasaWebService];
+    GDataServiceGooglePhotos *service = [self photoService];
     
     // make service tickets call back into our upload progress selector
     SEL progressSel = @selector(uploadProgress:hasDeliveredByteCount:ofTotalByteCount:);
@@ -1005,13 +988,12 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     // If Aperture cancels, we immediately tell it to go ahead - but some callbacks may still
     // be running. Retain ourself so we can return from the callbacks and clean up correctly.
     [self retain]; 
-    ticket = [service fetchPicasaWebEntryByInsertingEntry:newEntry
-                                               forFeedURL:feedURL
-                                                 delegate:self
-                                        didFinishSelector:@selector(addPhotoTicket:finishedWithEntry:)
-                                          didFailSelector:@selector(addPhotoTicket:failedWithError:)];
+    ticket = [service fetchEntryByInsertingEntry:newEntry
+                                      forFeedURL:feedURL
+                                        delegate:self
+                               didFinishSelector:@selector(addPhotoTicket:finishedWithEntry:error:)];
     // no need for future tickets to monitor progress
-    [service setServiceUploadProgressSelector:nil];
+    //[service setServiceUploadProgressSelector:nil];
   } else {
     NSString *photoName = [[picture path] lastPathComponent];
     // nil data from photo file.
@@ -1023,74 +1005,73 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   return YES;
 }
 
-- (void)uploadProgress:(GDataProgressMonitorInputStream *)stream
+- (void)uploadProgress:(GDataServiceTicketBase *)ticket
  hasDeliveredByteCount:(unsigned long long)numberOfBytesWritten
       ofTotalByteCount:(unsigned long long)dataLength {
-  //NSLog(@"uploadProgress: %qu/%qu", numberOfBytesWritten, dataLength);
-  [self lockProgress];
-  exportProgress.currentValue = numberOfBytesWritten;
-  exportProgress.totalValue = dataLength;
-  [self unlockProgress];
+  NSLog(@"uploadProgress: %qu/%qu", numberOfBytesWritten, dataLength);
 }
   
 // photo added successfully
-- (void)addPhotoTicket:(GDataServiceTicket *)ticket finishedWithEntry:(GDataEntryPhoto *)photoEntry
+- (void)addPhotoTicket:(GDataServiceTicket *)ticket
+     finishedWithEntry:(GDataEntryBase *)photoEntry
+                 error:(NSError*) error
 {
   [self release]; // Remove the retained.
-  NSLog(@"!!!!!!!!Added photo %@", [[photoEntry title] stringValue]);
-
-  // We may be run without disk picture writing. if we are saving at disk, exportedImages cound > 0.
-  if ([exportedImages count] > 0) {
-    GDataServiceGooglePicasaWeb *service = [self picasaWebService];
-    NSURL *postURL = [[photoEntry feedLink] URL];
-
-    // Get the last uploaded picture.
-    APPicture *picture = [exportedImages objectAtIndex:0];
-
-	if ([picture uploadKeywords] && [[picture keywords] count] > 0) {
-		NSString *keyword = [[picture keywords]componentsJoinedByString:@","];
-		GDataEntryPhotoTag* tag = [GDataEntryPhotoTag tagEntryWithString:keyword];
-		NSLog(@"Adding %@ to %@", [tag description], [postURL description]);
-		// Add tags. Let's ignore the result.
-		[service fetchPicasaWebEntryByInsertingEntry:tag
-										forFeedURL:postURL
-										  delegate:self
-								 didFinishSelector:nil
-								   didFailSelector:nil];
+  // Get the last uploaded picture.
+  APPicture *picture = [exportedImages objectAtIndex:0];
       
-    }
-    // Delete the last uploaded file
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *imagePath = [picture path];
-    [fileManager removeItemAtPath:imagePath error:NULL];
-    [exportedImages removeObjectAtIndex:0];
+  if (photoEntry) {
+    NSLog(@"!!!!!!!!Added photo %@", [[photoEntry title] stringValue]);
     
-    // Upload the next file, if we are reading from disk.
-    [self _uploadNextImage];
+    // We may be run without disk picture writing. if we are saving at disk, exportedImages cound > 0.
+    if ([exportedImages count] > 0) {
+      GDataServiceGooglePhotos *service = [self photoService];
+      NSURL *postURL = [[photoEntry feedLink] URL];
+      
+      if ([picture uploadKeywords] && [[picture keywords] count] > 0) {
+        NSLog(@"%d keywords to add to %@", [[picture keywords] count], [[photoEntry title] stringValue]);
+        for (int i = 0; i < [[picture keywords] count]; ++i) {
+          //NSString *keyword = [[picture keywords]componentsJoinedByString:@" "];
+          NSString *keyword = [[picture keywords] objectAtIndex:i];
+          GDataEntryPhotoTag* tag = [GDataEntryPhotoTag tagEntryWithString:keyword];
+          NSLog(@"Adding %@ to %@", [tag description], [postURL description]);
+          // Add tags. Let's ignore the result.
+          [service fetchEntryByInsertingEntry:tag
+                                   forFeedURL:postURL
+                                     delegate:self
+                            didFinishSelector:nil];
+        }
+        
+      }
+      // Delete the last uploaded file
+      NSFileManager *fileManager = [NSFileManager defaultManager];
+      NSString *imagePath = [picture path];
+      [fileManager removeItemAtPath:imagePath error:NULL];
+      [exportedImages removeObjectAtIndex:0];
+      
+      // Upload the next file, if we are reading from disk.
+      [self _uploadNextImage];
+    }
+  } else {
+    NSLog(@"Added photo %@ failed: %@", [picture title], [error description]);
+    // Don't bother showing error message if user has cancelled the operation.aiel
+    if ([self shouldCancelExport] == NO) {
+      APPicture *picture = [exportedImages objectAtIndex:0];
+      NSString *format = [self _localizedStringForKey:@"uploadErrorFormat"
+                                         defaultValue:@"There was an error uploading %@."];
+      NSString *errorMessage = [NSString stringWithFormat:format, [[picture path] lastPathComponent]];
+      NSAlert *alert = [NSAlert alertWithMessageText:errorMessage
+                                       defaultButton:[self _localizedStringForKey:@"OK"
+                                                                     defaultValue:@"OK"]
+                                     alternateButton:nil
+                                         otherButton:nil
+                           informativeTextWithFormat:[error description]];
+      [alert setAlertStyle:NSCriticalAlertStyle];
+      [alert runModal];
+    }
+    [_exportManager shouldCancelExport];
   }
 } 
-
-// failure to add photo
-- (void)addPhotoTicket:(GDataServiceTicket *)ticket failedWithError:(NSError *)error {
-  [self release]; // Remove the retained.
-  NSLog(@"Added photo %@ failed", error);
-  if ([self shouldCancelExport] == NO) {
-    APPicture *picture = [exportedImages objectAtIndex:0];
-    NSString *format = [self _localizedStringForKey:@"uploadErrorFormat"
-                                       defaultValue:@"There was an error uploading %@."];
-    NSString *errorMessage = [NSString stringWithFormat:format, [[picture path] lastPathComponent]];
-    NSAlert *alert = [NSAlert alertWithMessageText:errorMessage
-                                     defaultButton:[self _localizedStringForKey:@"OK"
-                                                                   defaultValue:@"OK"]
-                                   alternateButton:nil
-                                       otherButton:nil
-                         informativeTextWithFormat:[error description]];
-    [alert setAlertStyle:NSCriticalAlertStyle];
-    [alert runModal];
-  }
-  [_exportManager shouldCancelExport];
-}
-  
   
 #pragma mark Setters and Getters
 
@@ -1098,9 +1079,9 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   return mUserAlbumFeed; 
 }
 
-- (void)setAlbumFeed:(GDataFeedPhotoUser *)feed {
+- (void)setAlbumFeed:(GDataFeedBase *)feed {
   [mUserAlbumFeed autorelease];
-  mUserAlbumFeed = [feed retain];
+  mUserAlbumFeed = (GDataFeedPhotoUser *)[feed retain];
 }
 
 - (NSError *)albumFetchError {
