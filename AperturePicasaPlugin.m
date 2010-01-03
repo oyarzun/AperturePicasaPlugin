@@ -64,6 +64,10 @@
 // background, so sets up an NSAutoreleasePool.
 - (void)threadLoadThumbNails;
 
+// Create the directory at path, creating the parent directories if necessary.
+// Shows a modal error message in case of error.
+- (BOOL)createDirectory:(NSString *) path;
+
 @end
 
 #define kUserDefaultUsername @"AperturePicasaPluginDefaultUsername"
@@ -84,6 +88,27 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 // do not obtain a valid reference, you should return nil.
 // Returning nil means that a plug-in chooses not to be accessible.
 //---------------------------------------------------------
+
+- (BOOL)createDirectory:(NSString *)path
+{
+  NSFileManager *fileManager = [NSFileManager defaultManager];
+  NSError *createError;
+  if ([fileManager createDirectoryAtPath:path 
+              withIntermediateDirectories:TRUE
+                               attributes:nil
+                                    error:&createError])
+    return YES;
+  NSString *errorMessage = [self _localizedStringForKey:@"createDirectoryFormat" 
+                                           defaultValue:@"There was an error creating directory."];
+  NSString *informativeText = [createError localizedDescription];
+  NSLog(@"Error: %@: %@", errorMessage, informativeText);
+  NSAlert *alert = [NSAlert alertWithMessageText:errorMessage defaultButton:[self _localizedStringForKey:@"OK" defaultValue:@"OK"]
+                                 alternateButton:nil otherButton:nil informativeTextWithFormat:informativeText];
+  [alert setAlertStyle:NSCriticalAlertStyle];
+  [alert runModal];      
+  [createError release];
+  return NO;
+}
 
 - (id)initWithAPIManager:(id<PROAPIAccessing>)apiManager
 {
@@ -107,23 +132,25 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 		BOOL isDirectory;
 		if (![fileManager fileExistsAtPath:tempDirectoryPath isDirectory:&isDirectory])
 		{
-			[fileManager createDirectoryAtPath:tempDirectoryPath attributes:nil];
+      if (![self createDirectory:tempDirectoryPath]) 
+        return nil;
 		}
 		else if (isDirectory) // If a folder already exists, empty it.
 		{
-			NSArray *contents = [fileManager directoryContentsAtPath:tempDirectoryPath];
+			NSArray *contents = [fileManager contentsOfDirectoryAtPath:tempDirectoryPath error:NULL];
 			int i;
 			for (i = 0; i < [contents count]; i++)
 			{
 				NSString *tempFilePath =
             [NSString stringWithFormat:@"%@%@", tempDirectoryPath, [contents objectAtIndex:i]];
-				[fileManager removeFileAtPath:tempFilePath handler:nil];
+				[fileManager removeItemAtPath:tempFilePath error:NULL];
 			}
 		}
 		else // Delete the old file and create a new directory
 		{
-			[fileManager removeFileAtPath:tempDirectoryPath handler:nil];
-			[fileManager createDirectoryAtPath:tempDirectoryPath attributes:nil];
+			[fileManager removeItemAtPath:tempDirectoryPath error:NULL];
+      if (![self createDirectory:tempDirectoryPath])
+        return nil;
 		}
     _tableColumnWidth = 172.0;
     _quotaUsage = 0;
@@ -145,7 +172,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 	[_topLevelNibObjects release];
 	
     // Clean up the temporary files
-	[[NSFileManager defaultManager] removeFileAtPath:tempDirectoryPath handler:nil];
+	[[NSFileManager defaultManager] removeItemAtPath:tempDirectoryPath error:NULL];
 	[tempDirectoryPath release];
   
   // Picasa data
@@ -579,11 +606,11 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   // Try to get the password from the keychain
   if (saveToKeychain &&
       SecKeychainFindInternetPassword(NULL, strlen(kPicasaDomain), kPicasaDomain, 0, NULL,
-                                      [username cStringLength], [username UTF8String], 
+                                      [username lengthOfBytesUsingEncoding:NSUTF8StringEncoding], [username UTF8String], 
                                       strlen(kPicasaPath), kPicasaPath, 0, kSecProtocolTypeHTTP,
                                       kSecAuthenticationTypeDefault, &keychainPasswordLength,
                                       (void*)&keychainPassword, NULL) == noErr) {
-    _password = [NSString stringWithCString:keychainPassword length:keychainPasswordLength];
+    _password = [NSString stringWithCString:keychainPassword encoding:NSUTF8StringEncoding];
     [passwordField setStringValue:_password];
     SecKeychainItemFreeContent(NULL, keychainPassword);
     [self setAddToKeychain:TRUE]; 
@@ -632,8 +659,8 @@ static const char kPicasaPath[]  = "data/feed/api/all";
                                                      strlen(kPicasaPath), kPicasaPath, 0,
                                                      kSecProtocolTypeHTTP,
                                                      kSecAuthenticationTypeDefault,
-                                                     [_password cStringLength],
-                                                     (void*)[_password cString], NULL);
+                                                     [_password lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
+                                                     (void*)[_password UTF8String], NULL);
     NSLog(@"Adding to keychain result %d", result);
   }
     
@@ -780,7 +807,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   [self setAlbumFetchError:error];    
   [self setAlbumFetchTicket:nil];
   
-  NSString *errorMessage = [NSString stringWithFormat:[self _localizedStringForKey:@"albumListFetchFormat" defaultValue:@"There was an error fetching albums."]];
+  NSString *errorMessage = [self _localizedStringForKey:@"albumListFetchFormat" defaultValue:@"There was an error fetching albums."];
   NSString *informativeText = [error localizedDescription];
   NSLog(@"Error: %@: %@", errorMessage, informativeText);
   NSAlert *alert = [NSAlert alertWithMessageText:errorMessage defaultButton:[self _localizedStringForKey:@"OK" defaultValue:@"OK"]
@@ -1028,7 +1055,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     // Delete the last uploaded file
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *imagePath = [picture path];
-    [fileManager removeFileAtPath:imagePath handler:nil];
+    [fileManager removeItemAtPath:imagePath error:NULL];
     [exportedImages removeObjectAtIndex:0];
     
     // Upload the next file, if we are reading from disk.
