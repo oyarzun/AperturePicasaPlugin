@@ -17,7 +17,11 @@
 //  GDataFeedPhotoBase.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_PHOTOS_SERVICE
+
 #import "GDataFeedBase.h"
+
+@class GDataEntryPhotoBase;
 
 @interface GDataFeedPhotoBase : GDataFeedBase {
 }
@@ -29,8 +33,13 @@
 - (NSString *)GPhotoID;
 - (void)setGPhotoID:(NSString *)str;
 
-  // like in the Java library, we'll rename subtitle as description
+// like in the Java library, we'll rename subtitle as description
 - (GDataTextConstruct *)photoDescription;
 - (void)setPhotoDescription:(GDataTextConstruct *)obj;
 - (void)setPhotoDescriptionWithString:(NSString *)str;
+
+// convenience accessors
+- (id)entryForGPhotoID:(NSString *)str;
 @end
+
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_PHOTOS_SERVICE

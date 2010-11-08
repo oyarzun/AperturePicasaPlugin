@@ -17,6 +17,8 @@
 //  GDataEntryEvent.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_CALENDAR_SERVICE
+
 #import "GDataEntryBase.h"
 #import "GDataLink.h"
 
@@ -30,19 +32,19 @@
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* kGDataCategoryEvent _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event");
+_EXTERN NSString* const kGDataCategoryEvent _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event");
 
-_EXTERN NSString *kGDataEventStatusConfirmed _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.confirmed");
-_EXTERN NSString *kGDataEventStatusTentative _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.tentative");
-_EXTERN NSString *kGDataEventStatusCanceled _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.canceled");
+_EXTERN NSString* const kGDataEventStatusConfirmed _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.confirmed");
+_EXTERN NSString* const kGDataEventStatusTentative _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.tentative");
+_EXTERN NSString* const kGDataEventStatusCanceled _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.canceled");
 
-_EXTERN NSString *kGDataEventTransparencyTransparent _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.transparent");
-_EXTERN NSString *kGDataEventTransparencyOpaque _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.opaque");
+_EXTERN NSString* const kGDataEventTransparencyTransparent _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.transparent");
+_EXTERN NSString* const kGDataEventTransparencyOpaque _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.opaque");
 
-_EXTERN NSString *kGDataEventVisibilityDefault _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.default");
-_EXTERN NSString *kGDataEventVisibilityPublic _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.public");
-_EXTERN NSString *kGDataEventVisibilityPrivate _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.private");
-_EXTERN NSString *kGDataEventVisibilityConfidential _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.confidental");
+_EXTERN NSString* const kGDataEventVisibilityDefault _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.default");
+_EXTERN NSString* const kGDataEventVisibilityPublic _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.public");
+_EXTERN NSString* const kGDataEventVisibilityPrivate _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.private");
+_EXTERN NSString* const kGDataEventVisibilityConfidential _INITIALIZE_AS(@"http://schemas.google.com/g/2005#event.confidental");
 
 
 #import "GDataValueConstruct.h"
@@ -147,3 +149,5 @@ _EXTERN NSString *kGDataEventVisibilityConfidential _INITIALIZE_AS(@"http://sche
 - (void)setLocations:(NSArray *)array;
 - (void)addLocation:(GDataWhere *)obj;
 @end
+
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_CALENDAR_SERVICE

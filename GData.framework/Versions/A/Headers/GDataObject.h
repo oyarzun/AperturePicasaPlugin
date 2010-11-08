@@ -1,17 +1,17 @@
 /* Copyright (c) 2007 Google Inc.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 //
 //  GDataObject.h
@@ -57,7 +57,7 @@
 // the subclass can add its unique children and attributes, if any.
 //
 //
-// 
+//
 // The extension model
 //
 // Extensions enable elements to contain children about which the element
@@ -74,7 +74,7 @@
 // to the extension by calling into the base class, as in
 //
 //  - (GDataColorProperty *)color {
-//    return (GDataColorProperty *) 
+//    return (GDataColorProperty *)
 //               [self objectForExtensionClass:[GDataColorProperty class]];
 //  }
 //
@@ -88,7 +88,7 @@
 // GDataWebContent elements:
 //
 //  [self addExtensionDeclarationForParentClass:[GDataLink class]
-//                                   childClass:[GDataWebContent class]];  
+//                                   childClass:[GDataWebContent class]];
 //
 // The CalendarEvent has extended GDataLinks without GDataLinks knowing or
 // caring.  Because GDataLink derives from GDataObject, the GDataLink
@@ -105,32 +105,41 @@
 #undef _EXTERN
 #undef _INITIALIZE_AS
 #ifdef GDATAOBJECT_DEFINE_GLOBALS
-#define _EXTERN 
+#define _EXTERN
 #define _INITIALIZE_AS(x) =x
 #else
 #define _EXTERN extern
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* kGDataNamespaceAtom _INITIALIZE_AS(@"http://www.w3.org/2005/Atom");
-_EXTERN NSString* kGDataNamespaceAtomPrefix _INITIALIZE_AS(@"atom");
+_EXTERN NSString* const kGDataNamespaceAtom          _INITIALIZE_AS(@"http://www.w3.org/2005/Atom");
+_EXTERN NSString* const kGDataNamespaceAtomPrefix    _INITIALIZE_AS(@"atom");
 
-_EXTERN NSString* kGDataNamespaceAtomPubStd _INITIALIZE_AS(@"http://www.w3.org/2007/app");
-_EXTERN NSString* kGDataNamespaceAtomPub1_0 _INITIALIZE_AS(@"http://purl.org/atom/app#");
-_EXTERN NSString* kGDataNamespaceAtomPubPrefix _INITIALIZE_AS(@"app");
+_EXTERN NSString* const kGDataNamespaceAtomPub       _INITIALIZE_AS(@"http://www.w3.org/2007/app");
+_EXTERN NSString* const kGDataNamespaceAtomPubPrefix _INITIALIZE_AS(@"app");
 
-_EXTERN NSString* kGDataNamespaceOpenSearch    _INITIALIZE_AS(@"http://a9.com/-/spec/opensearchrss/1.0/");
-_EXTERN NSString* kGDataNamespaceOpenSearch1_1 _INITIALIZE_AS(@"http://a9.com/-/spec/opensearch/1.1/");
-_EXTERN NSString* kGDataNamespaceOpenSearchPrefix _INITIALIZE_AS(@"openSearch");
+_EXTERN NSString* const kGDataNamespaceOpenSearch       _INITIALIZE_AS(@"http://a9.com/-/spec/opensearch/1.1/");
+_EXTERN NSString* const kGDataNamespaceOpenSearchPrefix _INITIALIZE_AS(@"openSearch");
 
-_EXTERN NSString* kGDataNamespaceXHTML _INITIALIZE_AS(@"http://www.w3.org/1999/xhtml");
-_EXTERN NSString* kGDataNamespaceXHTMLPrefix _INITIALIZE_AS(@"xh");
+_EXTERN NSString* const kGDataNamespaceXHTML       _INITIALIZE_AS(@"http://www.w3.org/1999/xhtml");
+_EXTERN NSString* const kGDataNamespaceXHTMLPrefix _INITIALIZE_AS(@"xh");
 
-_EXTERN NSString* kGDataNamespaceGData _INITIALIZE_AS(@"http://schemas.google.com/g/2005");
-_EXTERN NSString* kGDataNamespaceGDataPrefix _INITIALIZE_AS(@"gd");
+_EXTERN NSString* const kGDataNamespaceGData       _INITIALIZE_AS(@"http://schemas.google.com/g/2005");
+_EXTERN NSString* const kGDataNamespaceGDataPrefix _INITIALIZE_AS(@"gd");
 
-_EXTERN NSString* kGDataNamespaceBatch _INITIALIZE_AS(@"http://schemas.google.com/gdata/batch");
-_EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
+_EXTERN NSString* const kGDataNamespaceBatch       _INITIALIZE_AS(@"http://schemas.google.com/gdata/batch");
+_EXTERN NSString* const kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
+
+#define GDATA_DEBUG_ASSERT_MIN_SERVICE_VERSION(versionString) \
+  GDATA_DEBUG_ASSERT([self isServiceVersionAtLeast:versionString], \
+    @"%s requires newer version", _cmd)
+
+#define GDATA_DEBUG_ASSERT_MAX_SERVICE_VERSION(versionString) \
+  GDATA_DEBUG_ASSERT([self isServiceVersionAtMost:versionString], \
+    @"%s deprecated under v%@", _cmd, [self serviceVersion])
+
+#define GDATA_DEBUG_ASSERT_MIN_SERVICE_V2() \
+  GDATA_DEBUG_ASSERT_MIN_SERVICE_VERSION(@"2.0")
 
 @class GDataDateTime;
 @class GDataCategory;
@@ -161,49 +170,86 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 - (NSString *)stringValue;
 @end
 
-@interface GDataObject : NSObject <NSCopying> {
-  
-  @private
-  
-  // element name from original XML, used for later XML generation
-  NSString *elementName_; 
-  
-  GDataObject *parent_;  // WEAK, parent in tree of GData objects
-  
-  // GDataObjects keep namespaces as {key:prefix value:URI} dictionary entries
-  NSMutableDictionary *namespaces_; 
+// GDataDescriptionRecords are used for describing how the elements
+// and attributes of a GDataObject should be reported when -description
+// is called.
 
-  // list of potential GDataExtensionDeclarations for this element and its
-  // children, keyed by the declaration's parent class
-  NSMutableDictionary *extensionDeclarations_; 
-  
-  // list of attributes to be parsed for this element
+enum GDataDescRecTypes {
+  kGDataDescValueLabeled = 1,
+  kGDataDescLabelIfNonNil,
+  kGDataDescArrayCount,
+  kGDataDescArrayDescs,
+  kGDataDescBooleanLabeled,
+  kGDataDescBooleanPresent,
+  kGDataDescNonZeroLength,
+  kGDataDescValueIsKeyPath
+};
+
+typedef struct GDataDescriptionRecord {
+  NSString *label;
+  NSString *keyPath;
+  enum GDataDescRecTypes reportType;
+} GDataDescriptionRecord;
+
+
+@interface GDataObject : NSObject <NSCopying> {
+
+  @private
+
+  // element name from original XML, used for later XML generation
+  NSString *elementName_;
+
+  GDataObject *parent_;  // WEAK, parent in tree of GData objects
+
+  // GDataObjects keep namespaces as {key:prefix value:URI} dictionary entries
+  NSMutableDictionary *namespaces_;
+
+  // extension declaration cache, retained by the topmost parent
+  //
+  // keys are classes that have declared their extensions
+  //
+  // the values are dictionaries mapping declared parent classes to
+  // GDataExtensionDeclarations objects
+  NSMutableDictionary *extensionDeclarationsCache_;
+
+  // list of attributes to be parsed for each class
+  NSMutableDictionary *attributeDeclarationsCache_;
+
+  // list of attributes to be parsed for this class (points strongly into the
+  // attribute declarations cache)
   NSMutableArray *attributeDeclarations_;
-  
+
   // arrays of actual extension elements found for this element, keyed by extension class
-  NSMutableDictionary *extensions_;  
-  
+  NSMutableDictionary *extensions_;
+
   // dictionary of attributes set for this element, keyed by attribute name
   NSMutableDictionary *attributes_;
-  
+
   // string for element body, if declared as parseable
-  BOOL shouldParseContentValue_;
   NSString *contentValue_;
-  
+
+  // XMLElements saved from element body but not parsed, if declared by the subclass
+  NSMutableArray *childXMLElements_;
+
   // arrays of XMLNodes of attributes and child elements not yet parsed
-  NSMutableArray *unknownChildren_;    
-  NSMutableArray *unknownAttributes_;  
-  
+  NSMutableArray *unknownChildren_;
+  NSMutableArray *unknownAttributes_;
+  BOOL shouldIgnoreUnknowns_;
+
   // mapping of standard classes to user's surrogate subclasses, used when
   // creating objects from XML
   NSDictionary *surrogates_;
-  
+
   // service version, set for feeds and entries
   NSString *serviceVersion_;
-  
-  // anything defined by the client; retained but not used internally; not 
+
+  // core protocol version, set from the service version when
+  // -coreProtocolVersion is invoked
+  NSString *coreProtocolVersion_;
+
+  // anything defined by the client; retained but not used internally; not
   // copied by copyWithZone:
-  id userData_; 
+  id userData_;
   NSMutableDictionary *userProperties_;
 }
 
@@ -215,6 +261,8 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 //
 
 - (id)copyWithZone:(NSZone *)zone;
+
+- (id)initWithServiceVersion:(NSString *)serviceVersion;
 
 - (id)initWithXMLElement:(NSXMLElement *)element
                   parent:(GDataObject *)parent; // subclasses must override
@@ -251,14 +299,25 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 - (NSDictionary *)surrogates;
 
 // service API version
++ (NSString *)defaultServiceVersion;
+
+// a side-effect of setServiceVersion: is that the coreProtocolVersion is
+// reset
 - (void)setServiceVersion:(NSString *)str;
 - (NSString *)serviceVersion;
 
-- (BOOL)isServiceVersion1;
+- (BOOL)isServiceVersionAtLeast:(NSString *)otherVersion;
+- (BOOL)isServiceVersionAtMost:(NSString *)otherVersion;
 
-// userData is available for client use; retained by GDataObject, but not 
+// calling -coreProtocolVersion sets the initial core protocol version based
+// on the service version
+- (NSString *)coreProtocolVersion;
+- (void)setCoreProtocolVersion:(NSString *)str;
+- (BOOL)isCoreProtocolVersion1;
+
+// userData is available for client use; retained by GDataObject, but not
 // copied by the copyWithZone
-- (void)setUserData:(id)obj; 
+- (void)setUserData:(id)obj;
 - (id)userData;
 
 // properties are supported for client convenience, but are not copied by
@@ -277,6 +336,11 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 - (void)setUnknownAttributes:(NSArray *)arr;
 - (NSArray *)unknownAttributes;
 
+// feeds and their elements may exclude tracking of unknown child elements
+// and unknown attributes; see GDataServiceBase for more information
+- (void)setShouldIgnoreUnknowns:(BOOL)flag;
+- (BOOL)shouldIgnoreUnknowns;
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 //  Protected methods
@@ -292,17 +356,27 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 - (id)initWithXMLElement:(NSXMLElement *)element
                   parent:(GDataObject *)parent
           serviceVersion:(NSString *)serviceVersion
-              surrogates:(NSDictionary *)surrogates;
-  
-- (BOOL)generateContentInputStream:(NSInputStream **)outInputStream
-                            length:(unsigned long long *)outLength
-                           headers:(NSDictionary **)outHeaders;
+              surrogates:(NSDictionary *)surrogates
+    shouldIgnoreUnknowns:(BOOL)shouldIgnoreUnknowns;
 
 - (void)addExtensionDeclarations; // subclasses may override this to declare extensions
 
 - (void)addParseDeclarations; // subclasses may override this to declare local attributes and content value
 
-  
+- (void)clearExtensionDeclarationsCache; // used by GDataServiceBase and by subclasses
+
+// content stream and upload data: these always return NO/nil for objects
+// other than entries
+
+- (BOOL)generateContentInputStream:(NSInputStream **)outInputStream
+                            length:(unsigned long long *)outLength
+                           headers:(NSDictionary **)outHeaders;
+
+- (NSString *)uploadMIMEType;
+- (NSData *)uploadData;
+- (NSFileHandle *)uploadFileHandle;
+- (BOOL)shouldUploadDataOnly;
+
 //
 // Extensions
 //
@@ -339,8 +413,12 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 // Local attributes
 //
 
+// derived classes may override parseAttributesForElement if they need to
+// inspect attributes prior to parsing of element content
+- (void)parseAttributesForElement:(NSXMLElement *)element;
+
 // derived classes should call -addLocalAttributeDeclarations in their
-// -addParseDeclarations method if they want element attributes to 
+// -addParseDeclarations method if they want element attributes to
 // automatically be parsed
 - (void)addLocalAttributeDeclarations:(NSArray *)attributeLocalNames;
 
@@ -354,7 +432,8 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 
 // setting nil value for attribute removes it
 - (void)setStringValue:(NSString *)str forAttribute:(NSString *)name;
-- (void)setBoolValue:(BOOL)boolValue defaultValue:(BOOL)defaultVal forAttribute:(NSString *)name;
+- (void)setBoolValue:(BOOL)flag defaultValue:(BOOL)defaultVal forAttribute:(NSString *)name;
+- (void)setExplicitBoolValue:(BOOL)flag forAttribute:(NSString *)name;
 - (void)setDecimalNumberValue:(NSDecimalNumber *)num forAttribute:(NSString *)name;
 - (void)setDateTimeValue:(GDataDateTime *)cdate forAttribute:(NSString *)name;
 
@@ -368,12 +447,27 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 //
 
 // derived classes should call -addContentValueDeclaration in their
-// -addParseDeclarations method if they want element context to 
+// -addParseDeclarations method if they want element content to
 // automatically be parsed as a string
 - (void)addContentValueDeclaration;
+- (BOOL)hasDeclaredContentValue;
 - (void)setContentStringValue:(NSString *)str;
 - (NSString *)contentStringValue;
-  
+
+//
+// Unparsed XML child elements
+//
+
+// derived classes should call -addXMLValuesDeclaration in their
+// -addParseDeclarations method if they want all child elements to
+// be held as an array of NSXMLElements
+- (void)addChildXMLElementsDeclaration;
+- (BOOL)hasDeclaredChildXMLElements;
+- (NSArray *)childXMLElements;
+- (void)setChildXMLElements:(NSArray *)array;
+- (void)addChildXMLElement:(NSXMLNode *)node;
+
+
 //
 // Dynamic GDataObject generation
 //
@@ -384,20 +478,15 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 // The scheme or term in a category may be nil (during
 // registration and lookup) to match any values.
 
-// class registration methods
-+ (void)registerFeedClass:(Class)theClass
-    forCategoryWithScheme:(NSString *)scheme 
-                     term:(NSString *)term;
+// class registration method
++ (void)registerClass:(Class)theClass
+                inMap:(NSMutableDictionary **)map
+forCategoryWithScheme:(NSString *)scheme
+                 term:(NSString *)term;
 
-+ (void)registerEntryClass:(Class)theClass
-     forCategoryWithScheme:(NSString *)scheme 
-                      term:(NSString *)term;
-
-// class lookup methods
-+ (Class)feedClassForCategoryWithScheme:(NSString *)scheme 
-                                   term:(NSString *)term;
-+ (Class)entryClassForCategoryWithScheme:(NSString *)scheme 
-                                    term:(NSString *)term;
++ (Class)classForCategoryWithScheme:(NSString *)scheme
+                               term:(NSString *)term
+                            fromMap:(NSDictionary *)map;
 
 // objectClassForXMLElement: returns a found registered feed
 // or entry class for the XML according to its contained category
@@ -408,11 +497,11 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 //
 // If the element is not a <feed> or <entry> then nil is returned
 + (Class)objectClassForXMLElement:(NSXMLElement *)element;
-  
+
 //
 // XML parsing helpers (used in initWithXMLElement:parent:)
 //
-// Use these parsing helpers, since they remove the parsed items from the 
+// Use these parsing helpers, since they remove the parsed items from the
 // "unknown children" list for this object.
 //
 
@@ -422,27 +511,29 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
                 qualifiedName:(NSString *)qualifiedName
                  namespaceURI:(NSString *)namespaceURI
                   objectClass:(Class)objectClass;
-  
-// this creates an array of objects of the specified class for each XML child 
-// element with the specified name
-- (NSMutableArray *)objectsForChildrenOfElement:(NSXMLElement *)parentElement
-                                  qualifiedName:(NSString *)qualifiedName
-                                   namespaceURI:(NSString *)namespaceURI
-                                    objectClass:(Class)objectClass;
 
-// childOfElement:withName returns the element with the name, or nil of there 
+// this creates an array of objects of the specified class for each XML child
+// element with the specified name
+- (id)objectOrArrayForChildrenOfElement:(NSXMLElement *)parentElement
+                          qualifiedName:(NSString *)qualifiedName
+                           namespaceURI:(NSString *)namespaceURI
+                            objectClass:(Class)objectClass;
+
+// childOfElement:withName returns the element with the name, or nil of there
 // are not exactly one of the element
 - (NSXMLElement *)childWithQualifiedName:(NSString *)localName
                             namespaceURI:(NSString *)namespaceURI
                              fromElement:(NSXMLElement *)parentElement;
 
-// searches up the parent tree to find a surrogate for the standard class; 
+// searches up the parent tree to find a surrogate for the standard class;
 // if there is  no surrogate, returns the standard class itself
 - (Class)classOrSurrogateForClass:(Class)standardClass;
 
 // element parsing
 
-// this method avoids the "recursive descent" behavior of NSXMLElement's 
++ (NSDictionary *)dictionaryForElementNamespaces:(NSXMLElement *)element;
+
+// this method avoids the "recursive descent" behavior of NSXMLElement's
 // stringValue; the element parameter may be nil
 - (NSString *)stringValueFromElement:(NSXMLElement *)element;
 
@@ -458,22 +549,23 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 
 - (NSString *)stringForAttributeLocalName:(NSString *)localName
                                       URI:(NSString *)attributeURI
-                              fromElement:(NSXMLElement *)element;  
+                              fromElement:(NSXMLElement *)element;
 
-- (GDataDateTime *)dateTimeForAttributeName:(NSString *)attributeName 
+- (GDataDateTime *)dateTimeForAttributeName:(NSString *)attributeName
                                 fromElement:(NSXMLElement *)element;
 
-- (NSXMLNode *)attributeForName:(NSString *)attributeName 
+- (NSXMLNode *)attributeForName:(NSString *)attributeName
                     fromElement:(NSXMLElement *)element;
 
-- (BOOL)boolForAttributeName:(NSString *)attributeName 
+- (BOOL)boolForAttributeName:(NSString *)attributeName
                  fromElement:(NSXMLElement *)element;
 
-- (NSNumber *)doubleNumberForAttributeName:(NSString *)attributeName 
+- (NSNumber *)doubleNumberForAttributeName:(NSString *)attributeName
                                fromElement:(NSXMLElement *)element;
 
-- (NSNumber *)intNumberForAttributeName:(NSString *)attributeName 
+- (NSNumber *)intNumberForAttributeName:(NSString *)attributeName
                             fromElement:(NSXMLElement *)element;
+
 
 //
 // XML generation helpers
@@ -489,11 +581,11 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 
 - (NSXMLNode *)addToElement:(NSXMLElement *)element
      attributeValueIfNonNil:(NSString *)val
-              withLocalName:(NSString *)localName
+          withQualifiedName:(NSString *)qName
                         URI:(NSString *)attributeURI;
 
 - (NSXMLNode *)addToElement:(NSXMLElement *)element
-  attributeValueWithInteger:(int)val
+  attributeValueWithInteger:(NSInteger)val
                    withName:(NSString *)name;
 
 // adding child elements
@@ -501,9 +593,8 @@ _EXTERN NSString* kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 childWithStringValueIfNonEmpty:(NSString *)str
                    withName:(NSString *)name;
 
-- (NSXMLNode *)addToElement:(NSXMLElement *)element
-     childWithValuePropertyIfNonNil:(id)value
-                   withName:(NSString *)name;
+- (void)addToElement:(NSXMLElement *)element
+ XMLElementForObject:(id)object;
 
 - (void)addToElement:(NSXMLElement *)element
  XMLElementsForArray:(NSArray *)arrayOfGDataObjects;
@@ -512,17 +603,13 @@ childWithStringValueIfNonEmpty:(NSString *)str
 // decription method helpers
 //
 
+// the final descRecord in the list should be { nil, nil, 0 }
+- (void)addDescriptionRecords:(GDataDescriptionRecord *)descRecordList
+                      toItems:(NSMutableArray *)items;
+
 - (void)addToArray:(NSMutableArray *)stringItems
 objectDescriptionIfNonNil:(id)obj
           withName:(NSString *)name;
-
-- (void)addToArray:(NSMutableArray *)stringItems
-      integerValue:(NSInteger)val
-          withName:(NSString *)name;  
-
-- (void)addToArray:(NSMutableArray *)stringItems
-arrayCountIfNonEmpty:(NSArray *)array
-          withName:(NSString *)name;  
 
 - (void)addAttributeDescriptionsToArray:(NSMutableArray *)stringItems;
 
@@ -533,9 +620,21 @@ arrayCountIfNonEmpty:(NSArray *)array
 //
 // subclasses may implement -itemsForDescription and add to or
 // replace the superclass's array of items
+//
+// The base class itemsForDescription provides items for local attributes and
+// content, but not for any element extensions or attribute extensions
 - (NSMutableArray *)itemsForDescription;
 - (NSString *)descriptionWithItems:(NSArray *)items;
 - (NSString *)description;
+
+// coreProtocolVersionForServiceVersion maps the service version to the
+// underlying core protocol version.  The default implementation returns
+// the service version as the core protocol version.
+//
+// Entry and feed subclasses will need to implement this if their service
+// version numbers deviate from the core protocol version numbers.
++ (NSString *)coreProtocolVersionForServiceVersion:(NSString *)str;
+
 @end
 
 @interface NSXMLElement (GDataObjectExtensions)

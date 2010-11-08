@@ -17,8 +17,16 @@
 //  GDataQueryCalendar.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_CALENDAR_SERVICE
+
 // Calendar-specific query params, per 
 //   http://code.google.com/apis/calendar/reference.html#Parameters
+
+// NOTE: Events for a recurring event with recurrence exceptions (i.e. where
+// individual events have been modified) will be returned twice for a query,
+// once in the original event and once as a separate event. The separate
+// event occurence can be detected by examining its originalEvent; if not nil
+// then it will also be reported as part of the original event.
 
 #import "GDataQuery.h"
 
@@ -46,8 +54,15 @@
 - (BOOL)shouldExpandRecurrentEvents;
 - (void)setShouldExpandRecurrentEvents:(BOOL)dateTime;
 
+- (BOOL)shouldShowInlineComments;
+- (void)setShouldShowInlineComments:(BOOL)flag;
+
+- (BOOL)shouldShowHiddenEvents;
+- (void)setShouldShowHiddenEvents:(BOOL)flag;
+
 - (NSString *)currentTimeZoneName;
 - (void)setCurrentTimeZoneName:(NSString *)str;
   
 @end
 
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_CALENDAR_SERVICE

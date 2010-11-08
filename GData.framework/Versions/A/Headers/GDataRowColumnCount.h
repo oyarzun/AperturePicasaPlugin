@@ -17,6 +17,8 @@
 //  GDataColumnCount.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_SPREADSHEET_SERVICE
+
 #import "GDataObject.h"
 
 // For rowCount and colCount, like:
@@ -25,7 +27,7 @@
 // http://code.google.com/apis/spreadsheets/reference.html#gs_reference
 
 @interface GDataRowColumnCount : GDataObject <NSCopying> {
-  int count_;
+  NSInteger count_;
 }
 
 - (id)initWithXMLElement:(NSXMLElement *)element
@@ -33,20 +35,21 @@
 
 - (NSXMLElement *)XMLElement;
 
-- (int)count;
-- (void)setCount:(int)val;
+- (NSInteger)count;
+- (void)setCount:(NSInteger)val;
 
 @end
 
 @interface GDataColumnCount : GDataRowColumnCount <GDataExtension>
 
-+ (GDataColumnCount *)columnCountWithInt:(int)val;
++ (GDataColumnCount *)columnCountWithInt:(NSInteger)val;
 
 @end
 
 @interface GDataRowCount : GDataRowColumnCount <GDataExtension>
 
-+ (GDataRowCount *)rowCountWithInt:(int)val;
++ (GDataRowCount *)rowCountWithInt:(NSInteger)val;
 
 @end
 
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_SPREADSHEET_SERVICE

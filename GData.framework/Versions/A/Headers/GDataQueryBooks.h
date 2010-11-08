@@ -17,6 +17,8 @@
 //  GDataQueryBooks.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_BOOKS_SERVICE
+
 #import "GDataQuery.h"
 
 #undef _EXTERN
@@ -29,9 +31,9 @@
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* kGDataGoogleBooksMinViewabilityFull    _INITIALIZE_AS(@"full");
-_EXTERN NSString* kGDataGoogleBooksMinViewabilityNone    _INITIALIZE_AS(@"none");
-_EXTERN NSString* kGDataGoogleBooksMinViewabilityPartial _INITIALIZE_AS(@"partial");
+_EXTERN NSString* const kGDataGoogleBooksMinViewabilityFull    _INITIALIZE_AS(@"full");
+_EXTERN NSString* const kGDataGoogleBooksMinViewabilityNone    _INITIALIZE_AS(@"none");
+_EXTERN NSString* const kGDataGoogleBooksMinViewabilityPartial _INITIALIZE_AS(@"partial");
 
 @interface GDataQueryBooks : GDataQuery 
   
@@ -40,5 +42,9 @@ _EXTERN NSString* kGDataGoogleBooksMinViewabilityPartial _INITIALIZE_AS(@"partia
 - (void)setMinimumViewability:(NSString *)str;
 - (NSString *)minimumViewability;
 
+- (void)setEBook:(NSString *)str;
+- (NSString *)EBook;
+
 @end
 
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_BOOKS_SERVICE

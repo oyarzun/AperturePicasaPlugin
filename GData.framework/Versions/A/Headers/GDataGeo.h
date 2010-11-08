@@ -17,6 +17,9 @@
 //  GDataGeo.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_CALENDAR_SERVICE \
+     || GDATA_INCLUDE_PHOTOS_SERVICE || GDATA_INCLUDE_YOUTUBE_SERVICE
+
 // GDataGeo encapsulates three flavors of geo location in XML: W3X, GeoRSS,
 // and GeoGML.  Each flavor requires a separate subclass of GDataGeo for
 // parsing and XML generation.
@@ -38,14 +41,14 @@
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* kGDataNamespaceGeoW3C       _INITIALIZE_AS(@"http://www.w3.org/2003/01/geo/wgs84_pos#");
-_EXTERN NSString* kGDataNamespaceGeoW3CPrefix _INITIALIZE_AS(@"geo");
+_EXTERN NSString* const kGDataNamespaceGeoW3C       _INITIALIZE_AS(@"http://www.w3.org/2003/01/geo/wgs84_pos#");
+_EXTERN NSString* const kGDataNamespaceGeoW3CPrefix _INITIALIZE_AS(@"geo");
 
-_EXTERN NSString* kGDataNamespaceGeoRSS       _INITIALIZE_AS(@"http://www.georss.org/georss");
-_EXTERN NSString* kGDataNamespaceGeoRSSPrefix _INITIALIZE_AS(@"georss");
+_EXTERN NSString* const kGDataNamespaceGeoRSS       _INITIALIZE_AS(@"http://www.georss.org/georss");
+_EXTERN NSString* const kGDataNamespaceGeoRSSPrefix _INITIALIZE_AS(@"georss");
 
-_EXTERN NSString* kGDataNamespaceGeoGML       _INITIALIZE_AS(@"http://www.opengis.net/gml");
-_EXTERN NSString* kGDataNamespaceGeoGMLPrefix _INITIALIZE_AS(@"gml");
+_EXTERN NSString* const kGDataNamespaceGeoGML       _INITIALIZE_AS(@"http://www.opengis.net/gml");
+_EXTERN NSString* const kGDataNamespaceGeoGMLPrefix _INITIALIZE_AS(@"gml");
 
 @interface GDataGeo : GDataObject <NSCopying> {
   NSArray *values_; // One or more pairs of doubles (NSNumbers)
@@ -64,13 +67,15 @@ _EXTERN NSString* kGDataNamespaceGeoGMLPrefix _INITIALIZE_AS(@"gml");
 - (NSArray *)values;
 - (void)setValues:(NSArray *)array;
 
-- (NSArray *)valuesWithCoordinateString:(NSString *)str;
-- (NSString *)coordinateStringWithValues:(NSArray *)values;
+- (NSString *)coordinateString; // values joined by spaces
 
 - (double)latitude;
 - (double)longitude;
 
 - (BOOL)isPoint;
+
++ (NSArray *)valuesWithCoordinateString:(NSString *)str;
++ (NSString *)coordinateStringWithValues:(NSArray *)values;
 
 //
 // helpers for other GData classes which have a Geo as an element
@@ -120,4 +125,4 @@ _EXTERN NSString* kGDataNamespaceGeoGMLPrefix _INITIALIZE_AS(@"gml");
 @interface GDataGeoRSSWhere : GDataGeo <GDataExtension>
 @end
 
-
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_*_SERVICE

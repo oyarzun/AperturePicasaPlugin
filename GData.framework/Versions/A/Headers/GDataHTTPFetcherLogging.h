@@ -26,19 +26,27 @@
 // Log files are put into a folder on the desktop called "GDataHTTPDebugLogs"
 // unless another directory is specified with +setLoggingDirectory.
 //
+// In the iPhone simulator, the default logs location is the user's home
+// directory in ~/Library/Application Support.  On the iPhone device, the
+// default logs location is the application's documents directory on the device.
+//
+// Tip: use the Finder's "Sort By Date" to find the most recent logs.
+//
 // Each run of an application gets a separate set of log files.  An html
 // file is generated to simplify browsing the run's http transactions.
 // The html file includes javascript links for inline viewing of uploaded
 // and downloaded data.
 //
 // A symlink is created in the logs folder to simplify finding the html file
-// for the latest run of the application; the symlink is called 
+// for the latest run of the application; the symlink is called
 //
 //   AppName_http_log_newest.html
 //
 // For better viewing of XML logs, use Camino or Firefox rather than Safari.
 //
 // Projects may define STRIP_GDATA_FETCH_LOGGING to remove logging code.
+
+#if !STRIP_GDATA_FETCH_LOGGING
 
 @interface GDataHTTPFetcher (GDataHTTPFetcherLogging)
 
@@ -62,5 +70,7 @@
 
 // internal; called by fetcher
 - (void)logFetchWithError:(NSError *)error;
-- (void)logCapturePostStream;
+- (BOOL)logCapturePostStream;
 @end
+
+#endif

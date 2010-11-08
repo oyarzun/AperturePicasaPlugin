@@ -17,6 +17,8 @@
 //  GDataEntryPhoto.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_PHOTOS_SERVICE
+
 #import "GDataEntryPhotoBase.h"
 #import "GDataGeo.h"
 #import "GDataMediaGroup.h"
@@ -44,9 +46,6 @@
 - (NSString *)checksum;
 - (void)setChecksum:(NSString *)str;
 
-- (NSString *)client;
-- (void)setClient:(NSString *)str;
-
 - (NSNumber *)commentCount; // int
 - (void)setCommentCount:(NSNumber *)num;
 
@@ -56,9 +55,6 @@
 - (NSNumber *)height; // long long
 - (void)setHeight:(NSNumber *)num;
 
-- (NSNumber *)position; // double
-- (void)setPosition:(NSNumber *)num;
-
 - (NSNumber *)rotation; // int
 - (void)setRotation:(NSNumber *)num;
 
@@ -67,9 +63,6 @@
 
 - (GDataPhotoTimestamp *)timestamp; // use stringValue or date methods on timestamp
 - (void)setTimestamp:(GDataPhotoTimestamp *)str;
-
-- (NSString *)version;
-- (void)setVersion:(NSString *)str;
 
 - (NSNumber *)width; // long long
 - (void)setWidth:(NSNumber *)num;
@@ -87,5 +80,28 @@
 
 - (GDataEXIFTags *)EXIFTags;
 - (void)setEXIFTags:(GDataEXIFTags *)tags;
+
+//
+// search result elements introduced in V2
+//
+
+- (NSString *)albumDescription;
+- (void)setAlbumDescription:(NSString *)str;
+
+- (NSString *)albumTitle;
+- (void)setAlbumTitle:(NSString *)str;
+
+- (NSString *)snippet;
+- (void)setSnippet:(NSString *)str;
+
+// snippet type constants are in GDataPhotoConstants.h, like
+// kGDataPhotoSnippetTypeAlbumTitle
+- (NSString *)snippetType;
+- (void)setSnippetType:(NSString *)str;
+
+- (NSNumber *)truncated; // int, 0 or 1
+- (void)setTruncated:(NSNumber *)num;
+
 @end
 
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_PHOTOS_SERVICE

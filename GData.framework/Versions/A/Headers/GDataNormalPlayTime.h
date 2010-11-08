@@ -13,7 +13,12 @@
 * limitations under the License.
 */
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_PHOTOS_SERVICE \
+  || GDATA_INCLUDE_YOUTUBE_SERVICE
+
 #import <Foundation/Foundation.h>
+
+#import "GDataDefines.h"
 
 //  Time specification object which tries to conform to section 3.6
 //  of RFC 2326 (Normal Play Time).  http://www.ietf.org/rfc/rfc2326.txt
@@ -41,3 +46,5 @@
 
 - (void)setFromString:(NSString *)str;
 @end
+
+#endif // #if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_*_SERVICE

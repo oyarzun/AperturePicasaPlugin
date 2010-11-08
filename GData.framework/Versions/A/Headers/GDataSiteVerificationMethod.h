@@ -17,6 +17,8 @@
 //  GDataSiteVerificationMethod.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_WEBMASTERTOOLS_SERVICE
+
 #import "GDataObject.h"
 
 
@@ -30,8 +32,8 @@
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* kGDataSiteVerificationMethodMetatag _INITIALIZE_AS(@"metatag");
-_EXTERN NSString* kGDataSiteVerificationMethodHTMLPage _INITIALIZE_AS(@"htmlpage");
+_EXTERN NSString* const kGDataSiteVerificationMethodMetatag _INITIALIZE_AS(@"metatag");
+_EXTERN NSString* const kGDataSiteVerificationMethodHTMLPage _INITIALIZE_AS(@"htmlpage");
 
 // Verification method elements, like
 //
@@ -67,3 +69,4 @@ _EXTERN NSString* kGDataSiteVerificationMethodHTMLPage _INITIALIZE_AS(@"htmlpage
 - (void)setXMLValues:(NSArray *)values;
 @end
 
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_WEBMASTERTOOLS_SERVICE

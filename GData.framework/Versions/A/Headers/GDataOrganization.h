@@ -17,30 +17,24 @@
 //  GDataOrganization.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_CONTACTS_SERVICE
+
 #import "GDataObject.h"
 #import "GDataValueConstruct.h"
 
-// organization, as in 
-//  <gd:organization primary="true" rel="http://schemas.google.com/g/2005#work">
-//    <gd:orgTitle>Prezident</gd:orgTitle>
-//    <gd:orgName>Acme Corp</gd:orgName>
-//  </gd:organization>
+@class GDataWhere;
 
-@interface GDataOrgTitle : GDataValueElementConstruct <GDataExtension>
-+ (NSString *)extensionElementURI;
-+ (NSString *)extensionElementPrefix;
-+ (NSString *)extensionElementLocalName;
-@end
+// organization, as in
+//
+// <gd:organization rel="http://schemas.google.com/g/2005#work" label="Work" primary="true"/>
+//   <gd:orgName>Google</gd:orgName>
+//   <gd:orgTitle>Tech Writer</gd:orgTitle>
+//   <gd:orgJobDescription>Writes documentation</gd:orgJobDescription>
+//   <gd:orgDepartment>Software Development</gd:orgDepartment>
+//   <gd:orgSymbol>GOOG</gd:orgSymbol>
+// </gd:organization>
 
-@interface GDataOrgName : GDataValueElementConstruct <GDataExtension>
-+ (NSString *)extensionElementURI;
-+ (NSString *)extensionElementPrefix;
-+ (NSString *)extensionElementLocalName;
-@end
-
-
-@interface GDataOrganization : GDataObject <GDataExtension> {
-}
+@interface GDataOrganization : GDataObject <GDataExtension>
 
 + (GDataOrganization *)organizationWithName:(NSString *)str;
 
@@ -53,10 +47,27 @@
 - (BOOL)isPrimary;
 - (void)setIsPrimary:(BOOL)flag;
 
-- (NSString *)orgTitle;
-- (void)setOrgTitle:(NSString *)str;
-
 - (NSString *)orgName;
 - (void)setOrgName:(NSString *)str;
 
+- (NSString *)orgNameYomi;
+- (void)setOrgNameYomi:(NSString *)str;
+
+- (NSString *)orgTitle;
+- (void)setOrgTitle:(NSString *)str;
+
+- (NSString *)orgDepartment;
+- (void)setOrgDepartment:(NSString *)str;
+
+- (NSString *)orgJobDescription;
+- (void)setOrgJobDescription:(NSString *)str;
+
+- (NSString *)orgSymbol;
+- (void)setOrgSymbol:(NSString *)str;
+
+- (GDataWhere *)where;
+- (void)setWhere:(GDataWhere *)obj;
+
 @end
+
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_CONTACTS_SERVICE

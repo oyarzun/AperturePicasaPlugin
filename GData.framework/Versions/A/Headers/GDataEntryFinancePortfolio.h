@@ -17,6 +17,8 @@
 //  GDataEntryFinancePortfolio.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_FINANCE_SERVICE
+
 #import "GDataEntryBase.h"
 
 
@@ -32,12 +34,14 @@
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* kGDataNamespaceFinance       _INITIALIZE_AS(@"http://schemas.google.com/finance/2007");
-_EXTERN NSString* kGDataNamespaceFinancePrefix _INITIALIZE_AS(@"gf");
+_EXTERN NSString* const kGDataFinanceDefaultServiceVersion _INITIALIZE_AS(@"2.0");
 
-_EXTERN NSString* kGDataCategoryFinancePortfolio    _INITIALIZE_AS(@"http://schemas.google.com/finance/2007#portfolio");
-_EXTERN NSString* kGDataCategoryFinancePosition     _INITIALIZE_AS(@"http://schemas.google.com/finance/2007#position");
-_EXTERN NSString* kGDataCategoryFinanceTransaction  _INITIALIZE_AS(@"http://schemas.google.com/finance/2007#transaction");
+_EXTERN NSString* const kGDataNamespaceFinance       _INITIALIZE_AS(@"http://schemas.google.com/finance/2007");
+_EXTERN NSString* const kGDataNamespaceFinancePrefix _INITIALIZE_AS(@"gf");
+
+_EXTERN NSString* const kGDataCategoryFinancePortfolio    _INITIALIZE_AS(@"http://schemas.google.com/finance/2007#portfolio");
+_EXTERN NSString* const kGDataCategoryFinancePosition     _INITIALIZE_AS(@"http://schemas.google.com/finance/2007#position");
+_EXTERN NSString* const kGDataCategoryFinanceTransaction  _INITIALIZE_AS(@"http://schemas.google.com/finance/2007#transaction");
 
 
 @class GDataPortfolioData;
@@ -61,3 +65,5 @@ _EXTERN NSString* kGDataCategoryFinanceTransaction  _INITIALIZE_AS(@"http://sche
 - (NSURL *)positionURL; // from the feedLink's href attribute
 
 @end
+
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_FINANCE_SERVICE

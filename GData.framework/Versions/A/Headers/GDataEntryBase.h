@@ -36,21 +36,20 @@
 #undef _EXTERN
 #undef _INITIALIZE_AS
 #ifdef GDATAENTRYBASE_DEFINE_GLOBALS
-#define _EXTERN 
+#define _EXTERN
 #define _INITIALIZE_AS(x) =x
 #else
 #define _EXTERN extern
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* kGDataCategoryScheme _INITIALIZE_AS(@"http://schemas.google.com/g/2005#kind");
+_EXTERN NSString* const kGDataCategoryScheme _INITIALIZE_AS(@"http://schemas.google.com/g/2005#kind");
 
 
 @interface GDataEntryBase : GDataObject <NSCopying> {
-
-  NSString *etag_;
-
+  // either uploadData_ or uploadFileHandle_ may be set, but not both
   NSData *uploadData_;
+  NSFileHandle *uploadFileHandle_;
   NSString *uploadMIMEType_;
   NSString *uploadSlug_; // for http slug (filename) header when uploading
   BOOL shouldUploadDataOnly_;
@@ -58,12 +57,7 @@ _EXTERN NSString* kGDataCategoryScheme _INITIALIZE_AS(@"http://schemas.google.co
 
 + (NSDictionary *)baseGDataNamespaces;
 
-+ (GDataEntryBase *)entry;
-
-- (id)initWithXMLElement:(NSXMLElement *)element
-                  parent:(GDataObject *)parent;
-
-- (NSMutableArray *)itemsForDescription; // subclasses may implement this
++ (id)entry;
 
 // basic entry fields
 - (NSString *)identifier;
@@ -80,6 +74,15 @@ _EXTERN NSString* kGDataCategoryScheme _INITIALIZE_AS(@"http://schemas.google.co
 
 - (NSString *)ETag;
 - (void)setETag:(NSString *)str;
+
+- (NSString *)fieldSelection;
+- (void)setFieldSelection:(NSString *)str;
+
+- (NSString *)kind;
+- (void)setKind:(NSString *)str;
+
+- (NSString *)resourceID;
+- (void)setResourceID:(NSString *)str;
 
 - (GDataTextConstruct *)title;
 - (void)setTitle:(GDataTextConstruct *)theTitle;
@@ -105,14 +108,23 @@ _EXTERN NSString* kGDataCategoryScheme _INITIALIZE_AS(@"http://schemas.google.co
 - (void)setAuthors:(NSArray *)authors;
 - (void)addAuthor:(GDataPerson *)authorElement;
 
+- (NSArray *)contributors;
+- (void)setContributors:(NSArray *)array;
+- (void)addContributor:(GDataPerson *)obj;
+
 - (NSArray *)categories;
 - (void)setCategories:(NSArray *)categories;
 - (void)addCategory:(GDataCategory *)category;
 - (void)removeCategory:(GDataCategory *)category;
 
-// Multipart MIME Upload
+// File upload
+//
+// Either uploadData or uploadFileHandle should be set, but not both
 - (NSData *)uploadData;
 - (void)setUploadData:(NSData *)data;
+
+- (NSFileHandle *)uploadFileHandle;
+- (void)setUploadFileHandle:(NSFileHandle *)fileHandle;
 
 - (NSString *)uploadMIMEType;
 - (void)setUploadMIMEType:(NSString *)str;
@@ -121,11 +133,9 @@ _EXTERN NSString* kGDataCategoryScheme _INITIALIZE_AS(@"http://schemas.google.co
 - (BOOL)shouldUploadDataOnly;
 - (void)setShouldUploadDataOnly:(BOOL)flag;
 
-- (NSString *)uploadSlug; // for http slug (filename) header when uploading
+// http slug (filename) header when uploading
+- (NSString *)uploadSlug;
 - (void)setUploadSlug:(NSString *)str;
-
-+ (NSString *)MIMETypeForFileAtPath:(NSString *)path
-                    defaultMIMEType:(NSString *)defaultType;
 
 // extension for entries which may include deleted elements
 - (BOOL)isDeleted;
@@ -140,12 +150,12 @@ _EXTERN NSString* kGDataCategoryScheme _INITIALIZE_AS(@"http://schemas.google.co
 
 - (GDataBatchOperation *)batchOperation;
 - (void)setBatchOperation:(GDataBatchOperation *)obj;
-  
+
 // the batch ID is an arbitrary string defined by clients, and present in the
 // batch response feed to let the client match each entry's response to
 // the entry
 - (GDataBatchID *)batchID;
-- (void)setBatchID:(GDataBatchID *)obj; 
+- (void)setBatchID:(GDataBatchID *)obj;
 - (void)setBatchIDWithString:(NSString *)str;
 
 - (GDataBatchStatus *)batchStatus;
@@ -158,7 +168,15 @@ _EXTERN NSString* kGDataCategoryScheme _INITIALIZE_AS(@"http://schemas.google.co
 
 - (NSArray *)categoriesWithScheme:(NSString *)scheme;
 
+// most entries have a category element with scheme kGDataCategoryScheme
+// that indicates the kind of entry
+- (GDataCategory *)kindCategory;
+
+- (NSArray *)linksWithRelAttributeValue:(NSString *)relValue;
+
 - (GDataLink *)linkWithRelAttributeValue:(NSString *)relValue;
+- (GDataLink *)linkWithRelAttributeValue:(NSString *)rel
+                                    type:(NSString *)type;
 
 - (GDataLink *)feedLink;
 - (GDataLink *)editLink;
@@ -168,8 +186,33 @@ _EXTERN NSString* kGDataCategoryScheme _INITIALIZE_AS(@"http://schemas.google.co
 - (GDataLink *)postLink;
 - (GDataLink *)selfLink;
 - (GDataLink *)HTMLLink;
+- (GDataLink *)uploadEditLink;
 
 - (BOOL)canEdit;
-  
-@end
 
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Protected methods
+//
+//  All remaining methods are intended for use only by subclasses
+//  of GDataEntryBase.
+//
+
+// subclasses call registerEntryClass to register their standardEntryKind
++ (void)registerEntryClass;
+
++ (Class)entryClassForCategoryWithScheme:(NSString *)scheme
+                                    term:(NSString *)term;
++ (Class)entryClassForKindAttributeValue:(NSString *)kind;
+
+// temporary bridge method
++ (void)registerEntryClass:(Class)theClass
+     forCategoryWithScheme:(NSString *)scheme
+                      term:(NSString *)term;
+
+
+// subclasses override standardEntryKind to provide the term string for the
+// kind attribute of their kind category element, if any
++ (NSString *)standardEntryKind;
+
+@end

@@ -19,9 +19,22 @@
 
 #import "GDataObject.h"
 
+#undef _EXTERN
+#undef _INITIALIZE_AS
+#ifdef GDATAENTRYCONTENT_DEFINE_GLOBALS
+#define _EXTERN
+#define _INITIALIZE_AS(x) =x
+#else
+#define _EXTERN extern
+#define _INITIALIZE_AS(x)
+#endif
+
+_EXTERN NSString* const kGDataContentTypeKML _INITIALIZE_AS(@"application/vnd.google-earth.kml+xml");
+
+
 // per http://www.atomenabled.org/developers/syndication/atom-format-spec.php#element.content
 //
-// For typed content, like <title type="text">Event title</title>
+// For typed content, like <content type="text">Here go the ferrets</content>
 //
 // or media content with a source URI specified,
 //  <content src="http://lh.google.com/image/Car.jpg" type="image/jpeg"/>
@@ -32,13 +45,14 @@
 // Text type can be text, text/plain, html, text/html, xhtml, text/xhtml
 
 @interface GDataEntryContent : GDataObject {
-  NSString *textValue_;
   GDataObject *childObject_;
 }
 
 + (id)contentWithString:(NSString *)str;
 
 + (id)contentWithSourceURI:(NSString *)str type:(NSString *)type;
+
++ (id)contentWithXMLValue:(NSXMLNode *)node type:(NSString *)type;
 
 + (id)textConstructWithString:(NSString *)str; // deprecated
 
@@ -50,11 +64,16 @@
 
 - (NSString *)sourceURI;
 - (void)setSourceURI:(NSString *)str;
+- (NSURL *)sourceURL;
 
 - (NSString *)stringValue;
 - (void)setStringValue:(NSString *)str;
 
 - (GDataObject *)childObject;
 - (void)setChildObject:(GDataObject *)obj;
+
+- (NSArray *)XMLValues;
+- (void)setXMLValues:(NSArray *)arr;
+- (void)addXMLValue:(NSXMLNode *)node;
 
 @end

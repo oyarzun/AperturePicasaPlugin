@@ -17,6 +17,8 @@
 //  GDataEntryCodeSearch.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_CODESEARCH_SERVICE
+
 #import "GDataEntryBase.h"
 
 #undef _EXTERN
@@ -29,12 +31,14 @@
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* kGDataCategoryCodeSearch _INITIALIZE_AS(@"http://schemas.google.com/codesearch/2006#result"); // from CodeSearchEntry.java
+_EXTERN NSString* const kGDataCodeSearchDefaultServiceVersion _INITIALIZE_AS(@"2.0");
 
-_EXTERN NSString* kGDataNamespaceCodeSearch _INITIALIZE_AS(@"http://schemas.google.com/codesearch/2006");
-_EXTERN NSString* kGDataNamespaceCodeSearchPrefix _INITIALIZE_AS(@"gcs");
+_EXTERN NSString* const kGDataCategoryCodeSearch _INITIALIZE_AS(@"http://schemas.google.com/codesearch/2006#result"); // from CodeSearchEntry.java
 
-_EXTERN NSString* kGDataCodeSearchFeed _INITIALIZE_AS(@"http://www.google.com/codesearch/feeds/search");
+_EXTERN NSString* const kGDataNamespaceCodeSearch _INITIALIZE_AS(@"http://schemas.google.com/codesearch/2006");
+_EXTERN NSString* const kGDataNamespaceCodeSearchPrefix _INITIALIZE_AS(@"gcs");
+
+_EXTERN NSString* const kGDataCodeSearchFeed _INITIALIZE_AS(@"http://www.google.com/codesearch/feeds/search");
 
 #import "GDataCodeSearchFile.h"
 #import "GDataCodeSearchMatch.h"
@@ -59,3 +63,5 @@ _EXTERN NSString* kGDataCodeSearchFeed _INITIALIZE_AS(@"http://www.google.com/co
 - (void)addMatch:(GDataCodeSearchMatch *)match;
 
 @end
+
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_CODESEARCH_SERVICE

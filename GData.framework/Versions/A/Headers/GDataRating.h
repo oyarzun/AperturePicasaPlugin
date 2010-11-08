@@ -17,32 +17,34 @@
 //  GDataRating.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_BOOKS_SERVICE \
+  || GDATA_INCLUDE_CALENDAR_SERVICE || GDATA_INCLUDE_YOUTUBE_SERVICE
+
 #import "GDataObject.h"
 
 #undef _EXTERN
 #undef _INITIALIZE_AS
 #ifdef GDATARATING_DEFINE_GLOBALS
-#define _EXTERN 
+#define _EXTERN
 #define _INITIALIZE_AS(x) =x
 #else
 #define _EXTERN extern
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* kGDataRatingPrice  _INITIALIZE_AS(@"http://schemas.google.com/g/2005#price");
-_EXTERN NSString* kGDataRatingQuality  _INITIALIZE_AS(@"http://schemas.google.com/g/2005#quality");
+_EXTERN NSString* const kGDataRatingPrice   _INITIALIZE_AS(@"http://schemas.google.com/g/2005#price");
+_EXTERN NSString* const kGDataRatingQuality _INITIALIZE_AS(@"http://schemas.google.com/g/2005#quality");
 
 // rating, as in
 //  <gd:rating rel="http://schemas.google.com/g/2005#price" value="5" min="1" max="5"/>
 //
 // http://code.google.com/apis/gdata/common-elements.html#gdRating
 
-@interface GDataRating : GDataObject <GDataExtension> {
-}
+@interface GDataRating : GDataObject <GDataExtension>
 
-+ (GDataRating *)ratingWithValue:(int)value
-                             max:(int)max
-                             min:(int)min;
++ (GDataRating *)ratingWithValue:(NSInteger)value
+                             max:(NSInteger)max
+                             min:(NSInteger)min;
 
 - (NSString *)rel;
 - (void)setRel:(NSString *)str;
@@ -62,3 +64,5 @@ _EXTERN NSString* kGDataRatingQuality  _INITIALIZE_AS(@"http://schemas.google.co
 - (NSNumber *)numberOfRaters; // int
 - (void)setNumberOfRaters:(NSNumber *)num;
 @end
+
+#endif // #if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_*_SERVICE

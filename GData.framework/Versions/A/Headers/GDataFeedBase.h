@@ -31,7 +31,7 @@
 #undef _EXTERN
 #undef _INITIALIZE_AS
 #ifdef GDATAFEEDBASE_DEFINE_GLOBALS
-#define _EXTERN 
+#define _EXTERN
 #define _INITIALIZE_AS(x) =x
 #else
 #define _EXTERN extern
@@ -41,34 +41,35 @@
 // this constant, returned by a subclass implementation of -classForEntries,
 // specifies that a feed's entry class should be determined by inspecting
 // the XML for a "kind" category and looking at the registered entry classes
-// for an appropriate match 
-_EXTERN Class kUseRegisteredEntryClass _INITIALIZE_AS(nil);
+// for an appropriate match
+_EXTERN Class const kUseRegisteredEntryClass _INITIALIZE_AS(nil);
 
 @interface GDataFeedBase : GDataObject {
 
-  // generator is parsed manually to avoid comparison along with other 
+  // generator is parsed manually to avoid comparison along with other
   // extensions
-  GDataGenerator *generator_; 
-  
-  // etag attribute is parsed manually because it has a namespace 
-  NSString *etag_;
+  GDataGenerator *generator_;
 
   NSMutableArray *entries_;
 }
 
 + (id)feedWithXMLData:(NSData *)data;
 - (id)initWithData:(NSData *)data;
-- (id)initWithData:(NSData *)data serviceVersion:(NSString *)serviceVersion;
+- (id)initWithData:(NSData *)data
+    serviceVersion:(NSString *)serviceVersion
+shouldIgnoreUnknowns:(BOOL)shouldIgnoreUnknowns;
 
 // subclasses override initFeed to set up their ivars
 - (void)initFeedWithXMLElement:(NSXMLElement *)element;
 
-// subclasses may implement this
-- (NSMutableArray *)itemsForDescription; 
-
 // subclass may override this to specify an entry class or
 // to return kUseRegisteredEntryClass
 - (Class)classForEntries;
+
+// subclasses may override this to specify a "generic" class for
+// the feed's entries, if not GDataEntryBase, mainly for when there
+// is no registered entry class found
++ (Class)defaultClassForEntries;
 
 - (BOOL)canPost;
 
@@ -121,6 +122,15 @@ _EXTERN Class kUseRegisteredEntryClass _INITIALIZE_AS(nil);
 - (NSString *)ETag;
 - (void)setETag:(NSString *)str;
 
+- (NSString *)fieldSelection;
+- (void)setFieldSelection:(NSString *)str;
+
+- (NSString *)kind;
+- (void)setKind:(NSString *)str;
+
+- (NSString *)resourceID;
+- (void)setResourceID:(NSString *)str;
+
 - (NSArray *)entries;
 
 // setEntries: and addEntry: assert if the entries have other parents
@@ -151,17 +161,60 @@ _EXTERN Class kUseRegisteredEntryClass _INITIALIZE_AS(nil);
 
 // convenience routines
 
+- (GDataLink *)linkWithRelAttributeValue:(NSString *)rel;
+
 - (GDataLink *)feedLink;
 - (GDataLink *)alternateLink;
 - (GDataLink *)relatedLink;
 - (GDataLink *)postLink;
+- (GDataLink *)uploadLink; // "resumable-create" link
 - (GDataLink *)batchLink;
 - (GDataLink *)selfLink;
 - (GDataLink *)nextLink;
 - (GDataLink *)previousLink;
 
+// return the first entry, or nil if none
+- (id)firstEntry;
+
+// return the specified entry, or nil if index is out of bounds
+// (does not throw an exception if index exceeds the size of the entry array)
+- (id)entryAtIndex:(NSUInteger)index;
+
 // find the entry with the given identifier, or nil if none found
 - (id)entryForIdentifier:(NSString *)str;
 
-@end
+// find all entries with a kind category for the specified term
+//
+// this is useful for feeds which contain various kinds of entries with
+// distinct entry kind categories
+- (NSArray *)entriesWithCategoryKind:(NSString *)term;
 
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Protected methods
+//
+//  All remaining methods are intended for use only by subclasses
+//  of GDataFeedBase.
+//
+
+// subclasses call registerEntryClass to register their standardFeedKind
++ (void)registerFeedClass;
+
++ (Class)feedClassForCategoryWithScheme:(NSString *)scheme
+                                   term:(NSString *)term;
++ (Class)feedClassForKindAttributeValue:(NSString *)kind;
+
+// temporary bridge method
++ (void)registerFeedClass:(Class)theClass
+    forCategoryWithScheme:(NSString *)scheme
+                     term:(NSString *)term;
+
+// subclasses override standardFeedKind to provide the term string for the
+// term attribute of their "kind" category element, if any
++ (NSString *)standardFeedKind;
+
+// subclasses override standardKindAttributeValue to provide the string for the
+// kind attribute identifying their class (for core protocol v2.1 and later)
++ (NSString *)standardKindAttributeValue;
+
+@end

@@ -17,13 +17,14 @@
 //  GDataServiceGoogleContact.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_CONTACTS_SERVICE
+
 #import "GDataServiceGoogle.h"
-#import "GDataEntryContact.h"
 
 #undef _EXTERN
 #undef _INITIALIZE_AS
 #ifdef GDATASERVICEGOOGLECONTACT_DEFINE_GLOBALS
-#define _EXTERN 
+#define _EXTERN
 #define _INITIALIZE_AS(x) =x
 #else
 #define _EXTERN extern
@@ -43,78 +44,68 @@
 // name.  Requesting a feed for a specific property name avoids the need
 // to preserve other applications' property names when updating entries.
 
+// AllContacts includes actual and suggested contacts
+// Groups is for group feeds
+_EXTERN NSString* const kGDataGoogleContactAllContactsFeedName _INITIALIZE_AS(@"contacts");
+_EXTERN NSString* const kGDataGoogleContactGroupsFeedName      _INITIALIZE_AS(@"groups");
+
+// Projections - full (include all extended properties) or thin (exclude
+//               extended properties)
+_EXTERN NSString* const kGDataGoogleContactFullProjection _INITIALIZE_AS(@"full");
+_EXTERN NSString* const kGDataGoogleContactThinProjection _INITIALIZE_AS(@"thin");
+
 _EXTERN NSString* kGDataGoogleContactDefaultThinFeed _INITIALIZE_AS(@"http://www.google.com/m8/feeds/contacts/default/thin");
 _EXTERN NSString* kGDataGoogleContactDefaultFullFeed _INITIALIZE_AS(@"http://www.google.com/m8/feeds/contacts/default/full");
 
 _EXTERN NSString* kGDataGoogleContactGroupDefaultThinFeed _INITIALIZE_AS(@"http://www.google.com/m8/feeds/groups/default/thin");
 _EXTERN NSString* kGDataGoogleContactGroupDefaultFullFeed _INITIALIZE_AS(@"http://www.google.com/m8/feeds/groups/default/full");
 
-@class GDataQueryContact;
 
-// These routines are all simple wrappers around GDataServiceGoogle methods.
+@interface GDataServiceGoogleContact : GDataServiceGoogle
 
-@interface GDataServiceGoogleContact : GDataServiceGoogle 
++ (NSURL *)contactURLForFeedName:(NSString *)feedName
+                          userID:(NSString *)userID
+                      projection:(NSString *)projection;
 
-// Note: rather than call -contactFeedURLForUserID you can get the
-// feed URL for the authenticated user by using one of the feed
-// constants above and calling -fetchContactFeedWithURL
+// convenience URL generators for contacts feed
+//
+// Use kGDataServiceDefaultUser as the username to specify the authenticated
+// user
 
 + (NSURL *)contactFeedURLForUserID:(NSString *)userID;
-+ (NSURL *)contactFeedURLForUserID:(NSString *)userID projection:(NSString *)projection;
++ (NSURL *)groupFeedURLForUserID:(NSString *)userID;
+
++ (NSURL *)contactFeedURLForUserID:(NSString *)userID
+                        projection:(NSString *)projection;
 
 + (NSURL *)contactFeedURLForPropertyName:(NSString *)property;
 + (NSURL *)contactGroupFeedURLForPropertyName:(NSString *)property;
 
 - (GDataServiceTicket *)fetchContactFeedForUsername:(NSString *)username
                                            delegate:(id)delegate
-                                  didFinishSelector:(SEL)finishedSelector
-                                    didFailSelector:(SEL)failedSelector;
+                                  didFinishSelector:(SEL)finishedSelector;
 
-- (GDataServiceTicket *)fetchContactFeedWithURL:(NSURL *)feedURL
-                                       delegate:(id)delegate
-                              didFinishSelector:(SEL)finishedSelector
-                                didFailSelector:(SEL)failedSelector;
+// clients may use these fetch methods of GDataServiceGoogle
+//
+//  - (GDataServiceTicket *)fetchFeedWithURL:(NSURL *)feedURL delegate:(id)delegate didFinishSelector:(SEL)finishedSelector;
+//  - (GDataServiceTicket *)fetchFeedWithQuery:(GDataQuery *)query delegate:(id)delegate didFinishSelector:(SEL)finishedSelector;
+//  - (GDataServiceTicket *)fetchEntryWithURL:(NSURL *)entryURL delegate:(id)delegate didFinishSelector:(SEL)finishedSelector;
+//  - (GDataServiceTicket *)fetchEntryByInsertingEntry:(GDataEntryBase *)entryToInsert forFeedURL:(NSURL *)feedURL delegate:(id)delegate didFinishSelector:(SEL)finishedSelector;
+//  - (GDataServiceTicket *)fetchEntryByUpdatingEntry:(GDataEntryBase *)entryToUpdate delegate:(id)delegate didFinishSelector:(SEL)finishedSelector;
+//  - (GDataServiceTicket *)deleteEntry:(GDataEntryBase *)entryToDelete delegate:(id)delegate didFinishSelector:(SEL)finishedSelector;
+//  - (GDataServiceTicket *)deleteResourceURL:(NSURL *)resourceEditURL ETag:(NSString *)etag delegate:(id)delegate didFinishSelector:(SEL)finishedSelector;
+//  - (GDataServiceTicket *)fetchFeedWithBatchFeed:(GDataFeedBase *)batchFeed forBatchFeedURL:(NSURL *)feedURL delegate:(id)delegate didFinishSelector:(SEL)finishedSelector;
+//
+// finishedSelector has a signature like this for feed fetches:
+// - (void)serviceTicket:(GDataServiceTicket *)ticket finishedWithFeed:(GDataFeedBase *)feed error:(NSError *)error;
+//
+// or this for entry fetches:
+// - (void)serviceTicket:(GDataServiceTicket *)ticket finishedWithEntry:(GDataEntryBase *)entry error:(NSError *)error;
+//
+// The class of the returned feed or entry is determined by the URL fetched.
 
-
-- (GDataServiceTicket *)fetchContactEntryWithURL:(NSURL *)entryURL
-                                        delegate:(id)delegate
-                               didFinishSelector:(SEL)finishedSelector
-                                 didFailSelector:(SEL)failedSelector;
-
-// entry may be GDataContactEntry or GDataContactGroupEntry
-- (GDataServiceTicket *)fetchContactEntryByInsertingEntry:(id)entryToInsert
-                                               forFeedURL:(NSURL *)contactFeedURL
-                                                 delegate:(id)delegate
-                                        didFinishSelector:(SEL)finishedSelector
-                                          didFailSelector:(SEL)failedSelector;
-
-- (GDataServiceTicket *)fetchContactEntryByUpdatingEntry:(id)entryToUpdate
-                                             forEntryURL:(NSURL *)contactEntryEditURL
-                                                delegate:(id)delegate
-                                       didFinishSelector:(SEL)finishedSelector
-                                         didFailSelector:(SEL)failedSelector;
-
-- (GDataServiceTicket *)fetchContactQuery:(GDataQueryContact *)query
-                                 delegate:(id)delegate
-                        didFinishSelector:(SEL)finishedSelector
-                          didFailSelector:(SEL)failedSelector;
-
-- (GDataServiceTicket *)deleteContactEntry:(id)entryToDelete
-                                  delegate:(id)delegate
-                         didFinishSelector:(SEL)finishedSelector
-                           didFailSelector:(SEL)failedSelector;
-
-- (GDataServiceTicket *)deleteContactResourceURL:(NSURL *)resourceEditURL
-                                            ETag:(NSString *)etag
-                                        delegate:(id)delegate
-                               didFinishSelector:(SEL)finishedSelector
-                                 didFailSelector:(SEL)failedSelector;
-
-- (GDataServiceTicket *)fetchContactBatchFeedWithBatchFeed:(GDataFeedBase *)batchFeed
-                                           forBatchFeedURL:(NSURL *)feedURL
-                                                  delegate:(id)delegate
-                                         didFinishSelector:(SEL)finishedSelector
-                                           didFailSelector:(SEL)failedSelector;
 + (NSString *)serviceRootURLString;
 
 @end
+
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_CONTACTS_SERVICE

@@ -23,20 +23,23 @@
 #undef _EXTERN
 #undef _INITIALIZE_AS
 #ifdef GDATALINK_DEFINE_GLOBALS
-#define _EXTERN 
+#define _EXTERN
 #define _INITIALIZE_AS(x) =x
 #else
 #define _EXTERN extern
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* kGDataLinkRelFeed _INITIALIZE_AS(@"http://schemas.google.com/g/2005#feed");
-_EXTERN NSString* kGDataLinkRelPost _INITIALIZE_AS(@"http://schemas.google.com/g/2005#post");
-_EXTERN NSString* kGDataLinkRelBatch _INITIALIZE_AS(@"http://schemas.google.com/g/2005#batch");
+_EXTERN NSString* const kGDataLinkRelFeed            _INITIALIZE_AS(@"http://schemas.google.com/g/2005#feed");
+_EXTERN NSString* const kGDataLinkRelPost            _INITIALIZE_AS(@"http://schemas.google.com/g/2005#post");
+_EXTERN NSString* const kGDataLinkRelBatch           _INITIALIZE_AS(@"http://schemas.google.com/g/2005#batch");
+_EXTERN NSString* const kGDataLinkRelResumableCreate _INITIALIZE_AS(@"http://schemas.google.com/g/2005#resumable-create-media");
+_EXTERN NSString* const kGDataLinkRelResumableEdit   _INITIALIZE_AS(@"http://schemas.google.com/g/2005#resumable-edit-media");
 
-_EXTERN NSString* kGDataLinkTypeAtom _INITIALIZE_AS(@"application/atom+xml");
+_EXTERN NSString* const kGDataLinkTypeAtom _INITIALIZE_AS(@"application/atom+xml");
+_EXTERN NSString* const kGDataLinkTypeHTML _INITIALIZE_AS(@"text/html");
 
-// for links, like 
+// for links, like
 //
 //  <link rel="alternate" type="text/html"
 //        href="http://www.google.com/calendar/event?eid=b..." title="alternate">
@@ -46,9 +49,7 @@ _EXTERN NSString* kGDataLinkTypeAtom _INITIALIZE_AS(@"application/atom+xml");
 
 @class GDataAtomContent;
 
-@interface GDataLink : GDataObject <GDataExtension> {
-  NSString *etag_;
-}
+@interface GDataLink : GDataObject <GDataExtension>
 
 + (GDataLink *)linkWithRel:(NSString *)rel
                       type:(NSString *)type
@@ -79,7 +80,7 @@ _EXTERN NSString* kGDataLinkTypeAtom _INITIALIZE_AS(@"application/atom+xml");
 - (void)setETag:(NSString *)str;
 
 - (GDataAtomContent *)content;
-- (void)setContent:(GDataAtomContent *)obj;  
+- (void)setContent:(GDataAtomContent *)obj;
 
 // convenience method
 
@@ -92,9 +93,10 @@ _EXTERN NSString* kGDataLinkTypeAtom _INITIALIZE_AS(@"application/atom+xml");
 + (NSArray *)linkNamesFromLinks:(NSArray *)links;
 
 // utilities for extracting a GDataLink from an array of links
+
+// to search by rel only, use nil type to match any type
 + (GDataLink *)linkWithRel:(NSString *)relValue type:(NSString *)typeValue fromLinks:(NSArray *)array;
 
-+ (GDataLink *)linkWithRelAttributeValue:(NSString *)rel fromLinks:(NSArray *)array;
 + (GDataLink *)linkWithRelAttributeSuffix:(NSString *)relSuffix fromLinks:(NSArray *)array;
 
 @end

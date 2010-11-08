@@ -17,6 +17,9 @@
 //  GDataMediaGroup.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_PHOTOS_SERVICE \
+  || GDATA_INCLUDE_YOUTUBE_SERVICE
+
 #import "GDataObject.h"
 #import "GDataTextConstruct.h"
 
@@ -30,8 +33,8 @@
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* kGDataNamespaceMedia _INITIALIZE_AS(@"http://search.yahoo.com/mrss/");
-_EXTERN NSString* kGDataNamespaceMediaPrefix _INITIALIZE_AS(@"media");
+_EXTERN NSString* const kGDataNamespaceMedia _INITIALIZE_AS(@"http://search.yahoo.com/mrss/");
+_EXTERN NSString* const kGDataNamespaceMediaPrefix _INITIALIZE_AS(@"media");
 
 
 @class GDataMediaContent;
@@ -68,17 +71,9 @@ _EXTERN NSString* kGDataNamespaceMediaPrefix _INITIALIZE_AS(@"media");
 //   MediaText
 //   
 
-@interface GDataMediaGroup : GDataObject <NSCopying, GDataExtension> {
-}
+@interface GDataMediaGroup : GDataObject <GDataExtension>
 
 + (id)mediaGroup;
-
-- (id)initWithXMLElement:(NSXMLElement *)element
-                  parent:(GDataObject *)parent;
-
-- (NSMutableArray *)itemsForDescription; // subclasses may implement this;
-
-- (NSXMLElement *)XMLElement;
 
 // extension setters/getters
 
@@ -120,3 +115,5 @@ _EXTERN NSString* kGDataNamespaceMediaPrefix _INITIALIZE_AS(@"media");
 - (void)setMediaTitle:(GDataMediaTitle *)obj;
 
 @end
+
+#endif // #if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_*_SERVICE

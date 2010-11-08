@@ -25,6 +25,11 @@
 #import "GDataValueConstruct.h"
 #import "GDataEntryContent.h"
 
+// GData
+
+@interface GDataResourceID : GDataValueElementConstruct <GDataExtension>
+@end
+
 // Atom
 
 @interface GDataAtomID : GDataValueElementConstruct <GDataExtension>
@@ -65,30 +70,26 @@
 
 // AtomPub
 
-@interface GDataAtomPubEditedDate1_0 : GDataValueElementConstruct <GDataExtension>
-@end
-
-@interface GDataAtomPubEditedDateStd : GDataValueElementConstruct <GDataExtension>
-@end
-
-// OpenSearch 1.0
-
-@interface GDataOpenSearchTotalResults1_0 : GDataValueElementConstruct <GDataExtension>
-@end
-
-@interface GDataOpenSearchStartIndex1_0 : GDataValueElementConstruct <GDataExtension>
-@end
-
-@interface GDataOpenSearchItemsPerPage1_0 : GDataValueElementConstruct <GDataExtension>  
+@interface GDataAtomPubEditedDate : GDataValueElementConstruct <GDataExtension>
 @end
 
 // OpenSearch 1.1, adopted for GData version 2
 
-@interface GDataOpenSearchTotalResults1_1 : GDataValueElementConstruct <GDataExtension>
+@interface GDataOpenSearchTotalResults : GDataValueElementConstruct <GDataExtension>
 @end
 
-@interface GDataOpenSearchStartIndex1_1 : GDataValueElementConstruct <GDataExtension>
+@interface GDataOpenSearchStartIndex : GDataValueElementConstruct <GDataExtension>
 @end
 
-@interface GDataOpenSearchItemsPerPage1_1 : GDataValueElementConstruct <GDataExtension>  
+@interface GDataOpenSearchItemsPerPage : GDataValueElementConstruct <GDataExtension>
+@end
+
+// Attributes
+@interface GDataETagAttribute : GDataAttribute <GDataExtension>
+@end
+
+@interface GDataFieldsAttribute : GDataAttribute <GDataExtension>
+@end
+
+@interface GDataKindAttribute : GDataAttribute <GDataExtension>
 @end

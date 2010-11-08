@@ -21,6 +21,8 @@
 // DublinCore elements - http://uk.dublincore.org/documents/dces/
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_BOOKS_SERVICE
+
 #import "GDataValueConstruct.h"
 
 #undef _EXTERN
@@ -33,8 +35,8 @@
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* kGDataNamespaceDublinCore       _INITIALIZE_AS(@"http://purl.org/dc/terms");
-_EXTERN NSString* kGDataNamespaceDublinCorePrefix _INITIALIZE_AS(@"dc");
+_EXTERN NSString* const kGDataNamespaceDublinCore       _INITIALIZE_AS(@"http://purl.org/dc/terms");
+_EXTERN NSString* const kGDataNamespaceDublinCorePrefix _INITIALIZE_AS(@"dc");
 
 @interface GDataDCCreator : GDataValueElementConstruct <GDataExtension>
 + (NSString *)extensionElementURI;
@@ -89,3 +91,5 @@ _EXTERN NSString* kGDataNamespaceDublinCorePrefix _INITIALIZE_AS(@"dc");
 + (NSString *)extensionElementPrefix;
 + (NSString *)extensionElementLocalName;
 @end
+
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_BOOKS_SERVICE

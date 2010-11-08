@@ -13,15 +13,41 @@
 * limitations under the License.
 */
 
-// 
+//
 // GDataDefines.h
 //
 
+// Ensure Apple's conditionals we depend on are defined.
+#import <TargetConditionals.h>
+#import <AvailabilityMacros.h>
+
 //
 // The developer may choose to define these in the project:
-//   #define GDATA_FOUNDATION_ONLY 1     // builds without AppKit or Carbon  
-//   #define STRIP_GDATA_FETCH_LOGGING 1 // omit http logging code
 //
+//   #define GDATA_TARGET_NAMESPACE Xxx  // preface all GData class names with Xxx (recommended for building plug-ins)
+//   #define GDATA_FOUNDATION_ONLY 1     // builds without AppKit or Carbon (default for iPhone builds)
+//   #define GDATA_SIMPLE_DESCRIPTIONS 1 // remove elaborate -description methods, reducing code size (default for iPhone release builds)
+//   #define STRIP_GDATA_FETCH_LOGGING 1 // omit http logging code (default for iPhone release builds)
+//
+// Mac developers may find GDATA_SIMPLE_DESCRIPTIONS and STRIP_GDATA_FETCH_LOGGING useful for
+// reducing code size.
+//
+
+// Define later OS versions when building on earlier versions
+#ifdef MAC_OS_X_VERSION_10_0
+  #ifndef MAC_OS_X_VERSION_10_5
+    #define MAC_OS_X_VERSION_10_5 1050
+  #endif
+  #ifndef MAC_OS_X_VERSION_10_6
+    #define MAC_OS_X_VERSION_10_6 1060
+  #endif
+#endif
+
+
+#ifdef GDATA_TARGET_NAMESPACE
+// prefix all GData class names with GDATA_TARGET_NAMESPACE for this target
+  #import "GDataTargetNamespace.h"
+#endif
 
 #if TARGET_OS_IPHONE // iPhone SDK
 
@@ -60,22 +86,106 @@
   #define kGDataXMLElementPropertyKey  @"_XMLElement"
 #endif
 
+//
+// GDATA_ASSERT is like NSAssert, but takes a variable number of arguments:
+//
+//     GDATA_ASSERT(condition, @"Problem in argument %@", argStr);
+//
+// GDATA_DEBUG_ASSERT is similar, but compiles in only for debug builds
+//
+
+#ifndef GDATA_ASSERT
+  // we directly invoke the NSAssert handler so we can pass on the varargs
+  #if !defined(NS_BLOCK_ASSERTIONS)
+    #define GDATA_ASSERT(condition, ...)                                       \
+      do {                                                                     \
+        if (!(condition)) {                                                    \
+          [[NSAssertionHandler currentHandler]                                 \
+              handleFailureInFunction:[NSString stringWithUTF8String:__PRETTY_FUNCTION__] \
+                                 file:[NSString stringWithUTF8String:__FILE__] \
+                           lineNumber:__LINE__                                 \
+                          description:__VA_ARGS__];                            \
+        }                                                                      \
+      } while(0)
+  #else
+    #define GDATA_ASSERT(condition, ...) do { } while (0)
+  #endif // !defined(NS_BLOCK_ASSERTIONS)
+#endif // GDATA_ASSERT
+
+#ifndef GDATA_DEBUG_ASSERT
+  #if DEBUG
+    #define GDATA_DEBUG_ASSERT(condition, ...) GDATA_ASSERT(condition, __VA_ARGS__)
+  #else
+    #define GDATA_DEBUG_ASSERT(condition, ...) do { } while (0)
+  #endif
+#endif
+
+#ifndef GDATA_DEBUG_LOG
+  #if DEBUG
+    #define GDATA_DEBUG_LOG(...) NSLog(__VA_ARGS__)
+  #else
+    #define GDATA_DEBUG_LOG(...) do { } while (0)
+  #endif
+#endif
+
+
+//
+// macro to allow fast enumeration when building for 10.5 or later, and
+// reliance on NSEnumerator for 10.4
+//
+#ifndef GDATA_FOREACH
+  #if TARGET_OS_IPHONE || (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5)
+    #define GDATA_FOREACH(element, collection) \
+      for (element in collection)
+    #define GDATA_FOREACH_KEY(key, dict) \
+      for (key in dict)
+  #else
+    #define GDATA_FOREACH(element, collection) \
+      for (NSEnumerator* _ ## element ## _enum = [collection objectEnumerator]; \
+          (element = [_ ## element ## _enum nextObject]) != nil; )
+    #define GDATA_FOREACH_KEY(key, dict) \
+      for (NSEnumerator* _ ## key ## _enum = [dict keyEnumerator]; \
+          (key = [_ ## key ## _enum nextObject]) != nil; )
+  #endif
+#endif
+
+
+//
+// To reduce code size on iPhone release builds, we compile out the helpful
+// description methods for GData objects
+//
+#ifndef GDATA_SIMPLE_DESCRIPTIONS
+  #if GDATA_IPHONE && !DEBUG
+    #define GDATA_SIMPLE_DESCRIPTIONS 1
+  #else
+    #define GDATA_SIMPLE_DESCRIPTIONS 0
+  #endif
+#endif
+
+#ifndef STRIP_GDATA_FETCH_LOGGING
+  #if GDATA_IPHONE && !DEBUG
+    #define STRIP_GDATA_FETCH_LOGGING 1
+  #else
+    #define STRIP_GDATA_FETCH_LOGGING 0
+  #endif
+#endif
+
 
 // To simplify support for 64bit (and Leopard in general), we provide the type
 // defines for non Leopard SDKs
 #if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4
- // NSInteger/NSUInteger and Max/Mins
- #ifndef NSINTEGER_DEFINED
-  #if __LP64__ || NS_BUILD_32_LIKE_64
-   typedef long NSInteger;
-   typedef unsigned long NSUInteger;
-  #else
-   typedef int NSInteger;
-   typedef unsigned int NSUInteger;
-  #endif
-  #define NSIntegerMax    LONG_MAX
-  #define NSIntegerMin    LONG_MIN
-  #define NSUIntegerMax   ULONG_MAX
-  #define NSINTEGER_DEFINED 1
- #endif  // NSINTEGER_DEFINED
+  // NSInteger/NSUInteger and Max/Mins
+  #ifndef NSINTEGER_DEFINED
+    #if __LP64__ || NS_BUILD_32_LIKE_64
+      typedef long NSInteger;
+      typedef unsigned long NSUInteger;
+    #else
+      typedef int NSInteger;
+      typedef unsigned int NSUInteger;
+    #endif
+    #define NSIntegerMax    LONG_MAX
+    #define NSIntegerMin    LONG_MIN
+    #define NSUIntegerMax   ULONG_MAX
+    #define NSINTEGER_DEFINED 1
+  #endif  // NSINTEGER_DEFINED
 #endif  // MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4

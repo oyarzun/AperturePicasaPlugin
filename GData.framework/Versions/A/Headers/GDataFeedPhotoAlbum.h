@@ -17,6 +17,8 @@
 //  GDataFeedPhotoBase.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_PHOTOS_SERVICE
+
 #import "GDataFeedPhotoBase.h"
 #import "GDataGeo.h"
 #import "GDataPhotoElements.h"
@@ -44,9 +46,6 @@
 - (NSString *)location;
 - (void)setLocation:(NSString *)obj;
 
-- (NSString *)name;
-- (void)setName:(NSString *)obj;
-
 - (NSString *)nickname;
 - (void)setNickname:(NSString *)obj;
 
@@ -66,4 +65,7 @@
 
 - (GDataMediaGroup *)mediaGroup;
 - (void)setMediaGroup:(GDataMediaGroup *)obj;
+
 @end
+
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_PHOTOS_SERVICE

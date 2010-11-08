@@ -17,20 +17,11 @@
 //  GDataEntryFolderDoc.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_DOCS_SERVICE
+
 #import "GDataEntryDocBase.h"
-
-#undef _EXTERN
-#undef _INITIALIZE_AS
-#ifdef GDATAENTRYFOLDERDOC_DEFINE_GLOBALS
-#define _EXTERN 
-#define _INITIALIZE_AS(x) =x
-#else
-#define _EXTERN extern
-#define _INITIALIZE_AS(x)
-#endif
-
-_EXTERN NSString* kGDataCategoryFolderDoc _INITIALIZE_AS(@"http://schemas.google.com/docs/2007#folder");
 
 @interface GDataEntryFolderDoc : GDataEntryDocBase
 @end
 
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_DOCS_SERVICE

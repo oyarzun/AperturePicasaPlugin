@@ -22,17 +22,17 @@
 #undef _EXTERN
 #undef _INITIALIZE_AS
 #ifdef GDATABATCH_DEFINE_GLOBALS
-#define _EXTERN 
+#define _EXTERN
 #define _INITIALIZE_AS(x) =x
 #else
 #define _EXTERN extern
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* kGDataBatchOperationInsert _INITIALIZE_AS(@"insert");
-_EXTERN NSString* kGDataBatchOperationUpdate _INITIALIZE_AS(@"update");
-_EXTERN NSString* kGDataBatchOperationDelete _INITIALIZE_AS(@"delete");
-_EXTERN NSString* kGDataBatchOperationQuery  _INITIALIZE_AS(@"query");
+_EXTERN NSString* const kGDataBatchOperationInsert _INITIALIZE_AS(@"insert");
+_EXTERN NSString* const kGDataBatchOperationUpdate _INITIALIZE_AS(@"update");
+_EXTERN NSString* const kGDataBatchOperationDelete _INITIALIZE_AS(@"delete");
+_EXTERN NSString* const kGDataBatchOperationQuery  _INITIALIZE_AS(@"query");
 
 
 // for batch operations, like

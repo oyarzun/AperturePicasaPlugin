@@ -17,6 +17,9 @@
 //  GDataRole.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_ACLS \
+  || GDATA_INCLUDE_CALENDAR_SERVICE
+
 #import "GDataObject.h"
 
 #undef _EXTERN
@@ -34,6 +37,7 @@ _EXTERN NSString* const kGDataRolePeeker    _INITIALIZE_AS(@"peeker");
 _EXTERN NSString* const kGDataRoleReader    _INITIALIZE_AS(@"reader");
 _EXTERN NSString* const kGDataRoleWriter    _INITIALIZE_AS(@"writer");
 _EXTERN NSString* const kGDataRoleOwner     _INITIALIZE_AS(@"owner");
+_EXTERN NSString* const kGDataRoleCommenter _INITIALIZE_AS(@"commenter");
 
 // an element with a value attribute, as in
 //  <gAcl:role value='owner'></gAcl:role>
@@ -51,3 +55,4 @@ _EXTERN NSString* const kGDataRoleOwner     _INITIALIZE_AS(@"owner");
 
 @end
 
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDE || GDATA_INCLUDE_*

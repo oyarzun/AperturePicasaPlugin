@@ -969,8 +969,20 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     // attach the NSData and set the MIME type for the photo
     [newEntry setPhotoData:[picture data]];
     
-    NSString *mimeType = [GDataEntryBase MIMETypeForFileAtPath:[picture path]
-                                               defaultMIMEType:@"picture/jpeg"];
+	NSString *ext = [[picture path] pathExtension];
+	//If the file does not for some reason have extension then we'll pass empty mime type for it.
+	NSString *mimeType = @"";
+	  
+	  if(ext){  
+		  //Resolve which UTI the system thiks represents the specific file extension.
+		  CFStringRef UTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension,(CFStringRef)ext,NULL);
+		  //Convert the UTI to mime type
+		  CFStringRef mimeRef = UTTypeCopyPreferredTagWithClass(UTI,kUTTagClassMIMEType);
+		  
+		  mimeType = (NSString*)mimeRef;
+	  }  
+	  
+	  NSLog(@"File mime type is %@", mimeType);
     [newEntry setPhotoMIMEType:mimeType];
     
     // get the feed URL for the album we're inserting the photo into

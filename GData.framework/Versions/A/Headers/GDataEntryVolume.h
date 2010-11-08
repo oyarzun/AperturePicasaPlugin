@@ -1,82 +1,43 @@
 /* Copyright (c) 2008 Google Inc.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 //
 //  GDataEntryVolume.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_BOOKS_SERVICE
+
 #import "GDataEntryBase.h"
 #import "GDataValueConstruct.h"
+#import "GDataRating.h"
+#import "GDataComment.h"
 #import "GDataDublinCore.h"
 
-#undef _EXTERN
-#undef _INITIALIZE_AS
-#ifdef GDATAENTRYVOLUME_DEFINE_GLOBALS
-#define _EXTERN 
-#define _INITIALIZE_AS(x) =x
-#else
-#define _EXTERN extern
-#define _INITIALIZE_AS(x)
-#endif
-
-_EXTERN NSString* kGDataNamespaceBooks       _INITIALIZE_AS(@"http://schemas.google.com/books/2008");
-_EXTERN NSString* kGDataNamespaceBooksPrefix _INITIALIZE_AS(@"gbs");
-
-_EXTERN NSString* kGDataCategoryBooksVolume       _INITIALIZE_AS(@"http://schemas.google.com/books/2008#volume");
-_EXTERN NSString* kGDataCategoryBooksCollection   _INITIALIZE_AS(@"http://schemas.google.com/books/2008#collection");
-
-_EXTERN NSString* kGDataBooksViewAllPages _INITIALIZE_AS(@"http://schemas.google.com/books/2008#view_all_pages");
-_EXTERN NSString* kGDataBooksViewNoPages  _INITIALIZE_AS(@"http://schemas.google.com/books/2008#view_no_pages");
-_EXTERN NSString* kGDataBooksViewPartial  _INITIALIZE_AS(@"http://schemas.google.com/books/2008#view_partial");
-_EXTERN NSString* kGDataBooksViewUnknown  _INITIALIZE_AS(@"http://schemas.google.com/books/2008#view_unknown");
-
-_EXTERN NSString* kGDataBooksEmbeddable     _INITIALIZE_AS(@"http://schemas.google.com/books/2008#embeddable");
-_EXTERN NSString* kGDataBooksNotEmbeddable  _INITIALIZE_AS(@"http://schemas.google.com/books/2008#not_embeddable");
-
-_EXTERN NSString* kGDataBooksInfoRel       _INITIALIZE_AS(@"http://schemas.google.com/books/2008/info");
-_EXTERN NSString* kGDataBooksPreviewRel    _INITIALIZE_AS(@"http://schemas.google.com/books/2008/preview");
-_EXTERN NSString* kGDataBooksThumbnailRel  _INITIALIZE_AS(@"http://schemas.google.com/books/2008/thumbnail");
-_EXTERN NSString* kGDataBooksAnnotationRel _INITIALIZE_AS(@"http://schemas.google.com/books/2008/annotation");
-
-_EXTERN NSString* kGDataBooksLabelsScheme  _INITIALIZE_AS(@"http://schemas.google.com/books/2008/labels");
-
-
 @interface GDataVolumeViewability : GDataValueConstruct <GDataExtension>
-+ (NSString *)extensionElementURI;
-+ (NSString *)extensionElementPrefix;
-+ (NSString *)extensionElementLocalName;
 @end
 
 @interface GDataVolumeEmbeddability : GDataValueConstruct <GDataExtension>
-+ (NSString *)extensionElementURI;
-+ (NSString *)extensionElementPrefix;
-+ (NSString *)extensionElementLocalName;
+@end
+
+@interface GDataVolumeOpenAccess : GDataValueConstruct <GDataExtension>
 @end
 
 @interface GDataVolumeReview : GDataTextConstruct <GDataExtension>
-+ (NSString *)extensionElementURI;
-+ (NSString *)extensionElementPrefix;
-+ (NSString *)extensionElementLocalName;
 @end
 
-@class GDataRating;
-@class GDataComment;
-
 @interface GDataEntryVolume : GDataEntryBase
-
-+ (NSDictionary *)booksNamespaces;
 
 + (GDataEntryVolume *)volumeEntry;
 
@@ -99,6 +60,9 @@ _EXTERN NSString* kGDataBooksLabelsScheme  _INITIALIZE_AS(@"http://schemas.googl
 
 - (NSString *)embeddability;
 - (void)setEmbeddability:(NSString *)str;
+
+- (NSString *)openAccess;
+- (void)setOpenAccess:(NSString *)str;
 
 - (NSArray *)formats;
 - (void)setFormats:(NSArray *)arr;
@@ -138,4 +102,7 @@ _EXTERN NSString* kGDataBooksLabelsScheme  _INITIALIZE_AS(@"http://schemas.googl
 - (GDataLink *)previewLink;
 - (GDataLink *)infoLink;
 - (GDataLink *)annotationLink;
+- (GDataLink *)EPubDownloadLink;
 @end
+
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_BOOKS_SERVICE

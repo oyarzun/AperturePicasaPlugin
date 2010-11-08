@@ -17,6 +17,8 @@
 //  GDataFeedContactGroup.h
 //
 
+#if !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_CONTACTS_SERVICE
+
 #import "GDataFeedBase.h"
 
 @interface GDataFeedContactGroup : GDataFeedBase
@@ -25,4 +27,9 @@
 
 - (Class)classForEntries;
 
+// convenience method
+- (id)entryForSystemGroupID:(NSString *)str;
+
 @end
+
+#endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_CONTACTS_SERVICE
