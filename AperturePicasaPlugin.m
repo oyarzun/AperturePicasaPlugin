@@ -694,11 +694,20 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 - (IBAction)cancelCreateAlbum:(id)sender
 {
-  NSLog(@"cancelCreateAlbum %@", [sender description]);
+	NSLog(@"cancelCreateAlbum %@", [sender description]);
 	[NSApp endSheet:albumDetailsWindow];
 	[albumDetailsWindow orderOut:self];
 }
 
+- (IBAction)switchUser:(id)sender;
+{
+	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults] ; 
+	[defaults removeObjectForKey:kUserDefaultUsername];
+
+	[defaults removeObjectForKey:kUserDefaultSaveToKeychain];
+
+	[self authenticate];
+}
 #pragma mark -
 // Private Methods
 #pragma mark Picasa Interface

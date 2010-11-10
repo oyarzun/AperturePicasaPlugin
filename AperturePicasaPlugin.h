@@ -111,6 +111,7 @@
 - (IBAction)connectToPicasa:(id)sender;
 - (IBAction)createAlbum:(id)sender;
 - (IBAction)cancelCreateAlbum:(id)sender;
+- (IBAction)switchUser:(id)sender;
 
 // the getter returns an NSMutableArray but the setter
 // takes a regular NSArray. That allows us to accept
