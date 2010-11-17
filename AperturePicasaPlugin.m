@@ -28,6 +28,13 @@
 
 #include <Security/Security.h>
 
+#ifdef DEBUG
+	#define DebugLog( s, ... ) NSLog( @"<%s : (%d)> %@",__FUNCTION__, __LINE__, [NSString stringWithFormat:(s), ##__VA_ARGS__] )
+#else
+	#define DebugLog( s, ... ) 
+#endif
+
+
 @interface AperturePicasaPlugin(PrivateMethods)
 - (GDataServiceTicket *)albumFetchTicket;
 - (void)setAlbumFetchTicket:(GDataServiceTicket *)ticket;
@@ -101,7 +108,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   NSString *errorMessage = [self _localizedStringForKey:@"createDirectoryFormat" 
                                            defaultValue:@"There was an error creating directory."];
   NSString *informativeText = [createError localizedDescription];
-  NSLog(@"Error: %@: %@", errorMessage, informativeText);
+  DebugLog(@"Error: %@: %@", errorMessage, informativeText);
   NSAlert *alert = [NSAlert alertWithMessageText:errorMessage defaultButton:[self _localizedStringForKey:@"OK" defaultValue:@"OK"]
                                  alternateButton:nil otherButton:nil informativeTextWithFormat:informativeText];
   [alert setAlertStyle:NSCriticalAlertStyle];
@@ -112,9 +119,10 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 - (id)initWithAPIManager:(id<PROAPIAccessing>)apiManager
 {
+	tempDirectoryPath= NULL;
 	if (self = [super init])
 	{
-    NSLog(@"initWithAPIManager");       
+    DebugLog(@"initWithAPIManager");       
 
 		_apiManager	= apiManager;
 		_exportManager = [[_apiManager apiForProtocol:@protocol(ApertureExportManager)] retain];
@@ -161,7 +169,13 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     _projectName = nil;
     _selectedAlbum = nil;
 	}
-  NSLog(@"Using %@ as temp dir", tempDirectoryPath);
+	
+#ifdef DEBUG
+	if(tempDirectoryPath != NULL)
+		DebugLog(@"Using %@ as temp dir", tempDirectoryPath);
+	else
+		DebugLog(@"Using NULL as temp dir");
+#endif	
 	return self;
 }
 
@@ -217,7 +231,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 - (void)willBeActivated
 {
-	NSLog(@"willBeActivacted for %d images", [_exportManager imageCount]);
+	DebugLog(@"willBeActivacted for %d images", [_exportManager imageCount]);
 	[self setLoadingImages:YES];
 	[self adjustTableInterface];
 
@@ -238,7 +252,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 - (void)willBeDeactivated
 {
 	// Nothing to do here
-  NSLog(@"willBeDeactivacted");
+  DebugLog(@"willBeDeactivacted");
 }
 
 - (float)tableView:(NSTableView *)tableView heightOfRow:(int)row
@@ -261,7 +275,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 }
 
 - (void)tableViewSelectionIsChanging:(NSNotification *)aNotification {
-  NSLog(@"Selected picture = %@", [[[self imageList] objectAtIndex:[imageTableView selectedRow]] title]);
+  DebugLog(@"Selected picture = %@", [[[self imageList] objectAtIndex:[imageTableView selectedRow]] title]);
 }
 
 #pragma mark
@@ -327,7 +341,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 {
   // Before telling Aperture to begin generating picture data, test the connection using the
   // user-entered values
-  NSLog(@"exportManagerShouldBeginExport to album %@", [_selectedAlbum title]);
+  DebugLog(@"exportManagerShouldBeginExport to album %@", [_selectedAlbum title]);
   if (_authenticated && _selectedAlbum) {
     [_exportManager shouldBeginExport];
   } else {
@@ -355,13 +369,13 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 {
 	// Nothing to do here. We could test the path argument and confirm that it's the same path we passe
   // but that's not really necessary.
-  NSLog(@"exportManagerWillBeginExportToPath: %@", path);
+  DebugLog(@"exportManagerWillBeginExportToPath: %@", path);
 }
 
 - (BOOL)exportManagerShouldExportImageAtIndex:(unsigned)index
 {
 	// This plug-in doesn't exclude any images for any reason, so it always returns YES here.
-  NSLog(@"exportManagerShouldExportImageAtIndex: %d", index);
+  DebugLog(@"exportManagerShouldExportImageAtIndex: %d", index);
 	return YES;
 }
 
@@ -369,7 +383,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 {
 	// Nothing to do here - this is just a confirmation that we returned YES above. We could
 	// check to make sure we get confirmation messages for every picture.
-  //NSLog(@"exportManagerWillExportImageAtIndex: %d", index);
+  //DebugLog(@"exportManagerWillExportImageAtIndex: %d", index);
 }
 
 - (BOOL)exportManagerShouldWriteImageData:(NSData *)imageData toRelativePath:(NSString *)path forImageAtIndex:(unsigned)index
@@ -396,7 +410,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 	{
 		exportedImages = [[NSMutableArray alloc] initWithCapacity: imageCount];
 	}
-  NSLog(@"exportManagerDidWriteImageDataToRelativePath: %@, %d/%d", relativePath, index, imageCount);
+  DebugLog(@"exportManagerDidWriteImageDataToRelativePath: %@, %d/%d", relativePath, index, imageCount);
 	
 	// Save the paths of all the images that Aperture has exported
 	NSString *imagePath = [NSString stringWithFormat:@"%@%@", tempDirectoryPath, relativePath];
@@ -471,7 +485,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
                              withObject: dict
                           waitUntilDone: NO];      
     } else {
-      NSLog(@"Could not get thumbnail for image with index %d.", i);
+      DebugLog(@"Could not get thumbnail for image with index %d.", i);
     }
   }
 	[self performSelectorOnMainThread: @selector(setDoneLoadingThumbnails:)
@@ -535,7 +549,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 			// adding an object to an array retains it, so we can release our reference.
 			[picture release];
 		} else {
-			NSLog(@"Version %@ isn't found an picture", [image_dict objectForKey:kExportKeyVersionName]);
+			DebugLog(@"Version %@ isn't found an picture", [image_dict objectForKey:kExportKeyVersionName]);
 		}
 		//    
 		// now release the dictionary we received.
@@ -579,7 +593,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 - (IBAction)cancelConnection:(id)sender
 {
-  NSLog(@"cancelConnection %@", [sender description]);
+  DebugLog(@"cancelConnection %@", [sender description]);
 	[NSApp endSheet:connectionWindow];
 	[connectionWindow orderOut:self];
   [self setShouldCancelExport:YES];
@@ -593,7 +607,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   if (username && [username length]) {
     [usernameField setStringValue:username];
     [self setUsername:username];
-    NSLog(@"Got saved username: %@", username);
+    DebugLog(@"Got saved username: %@", username);
   }
   BOOL saveToKeychain = [defaults boolForKey:kUserDefaultSaveToKeychain];
   
@@ -607,14 +621,14 @@ static const char kPicasaPath[]  = "data/feed/api/all";
                                       strlen(kPicasaPath), kPicasaPath, 0, kSecProtocolTypeHTTP,
                                       kSecAuthenticationTypeDefault, &keychainPasswordLength,
                                       (void*)&keychainPassword, NULL) == noErr) {
-    NSLog(@"Found %d bytes of password", keychainPasswordLength);
+    DebugLog(@"Found %d bytes of password", keychainPasswordLength);
     _password = [NSString stringWithFormat:@"%*.*s", keychainPasswordLength, keychainPasswordLength, keychainPassword];
-    //NSLog(@"Password: %@", _password);
+    //DebugLog(@"Password: %@", _password);
     if (_password && [_password length]) {
       [passwordField setStringValue:_password];
       [self setAddToKeychain:TRUE]; 
     } else {
-      NSLog(@"Failed converting cstring password to  nsstring");
+      DebugLog(@"Failed converting cstring password to  nsstring");
       keychainPasswordLength = 0;  // consider it failure.
     }
     SecKeychainItemFreeContent(NULL, keychainPassword);
@@ -637,7 +651,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 - (IBAction)cancelAuthentication:(id)sender
 {
-  NSLog(@"cancelAuthentication %@", [sender description]);
+  DebugLog(@"cancelAuthentication %@", [sender description]);
 	[NSApp endSheet:authenticationWindow];
 	[authenticationWindow orderOut:self];
   _cancelled = TRUE;
@@ -648,7 +662,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 {
 	[NSApp endSheet:authenticationWindow];
 	[authenticationWindow orderOut:self];
-  NSLog(@"connectToPicasa %@", [sender description]);
+  DebugLog(@"connectToPicasa %@", [sender description]);
   [self setUsername:[usernameField stringValue]];
   _password = [[passwordField stringValue] copy];
   NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults] ; 
@@ -664,7 +678,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
                                                      kSecAuthenticationTypeDefault,
                                                      [_password lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
                                                      (void*)[_password UTF8String], NULL);
-    NSLog(@"Adding to keychain result %d", result);
+    DebugLog(@"Adding to keychain result %d", result);
   }
     
   [self fetchAllAlbums];
@@ -674,7 +688,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   // move the selected photo to the album represented by the sender menu item
   NSMenuItem *menuItem = sender;
   GDataEntryPhotoAlbum *albumEntry = [menuItem representedObject];
-  NSLog(@"selected album: %@", [sender description]);
+  DebugLog(@"selected album: %@", [sender description]);
   if (albumEntry) {
     _selectedAlbum = albumEntry;
   }
@@ -694,7 +708,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 - (IBAction)cancelCreateAlbum:(id)sender
 {
-	NSLog(@"cancelCreateAlbum %@", [sender description]);
+	DebugLog(@"cancelCreateAlbum %@", [sender description]);
 	[NSApp endSheet:albumDetailsWindow];
 	[albumDetailsWindow orderOut:self];
 }
@@ -764,7 +778,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
                                                                   photoID:nil
                                                                      kind:nil
                                                                    access:nil];
-  NSLog(@"Album Feed url: %@", [feedURL description]);
+  DebugLog(@"Album Feed url: %@", [feedURL description]);
   GDataServiceTicket *ticket;
   // If Aperture cancels, we immediately tell it to go ahead - but some callbacks may still
   // be running. Retain ourself so we can return from the callbacks and clean up correctly.
@@ -809,7 +823,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   } else {
     NSString *errorMessage = [self _localizedStringForKey:@"albumListFetchFormat" defaultValue:@"There was an error fetching albums."];
     NSString *informativeText = [error localizedDescription];
-    NSLog(@"Error: %@: %@", errorMessage, informativeText);
+    DebugLog(@"Error: %@: %@", errorMessage, informativeText);
     NSAlert *alert = [NSAlert alertWithMessageText:errorMessage defaultButton:[self _localizedStringForKey:@"OK" defaultValue:@"OK"]
                                    alternateButton:nil otherButton:nil informativeTextWithFormat:informativeText];
     [alert setAlertStyle:NSCriticalAlertStyle];
@@ -825,9 +839,9 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   unsigned long long quotaLimit = [[feed quotaLimit] unsignedLongLongValue];
   if (!quotaLimit) quotaLimit = 1;
   unsigned long long quotaPct = (quotaUsed*100/quotaLimit);
-  NSLog(@"quota used %ld quota limit %qu = %qu", quotaUsed, quotaLimit, quotaPct);
+  DebugLog(@"quota used %ld quota limit %qu = %qu", quotaUsed, quotaLimit, quotaPct);
   [self setQuotaUsage:quotaPct];
-  [self setUsername:[feed username]];
+  //[self setUsername:[feed username]];
   
   NSArray *entries = [feed entries];
 
@@ -859,18 +873,18 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     [item setTarget:self];
     [item setRepresentedObject:albumEntry];
   }
-  NSLog(@"Album list has %d elements", [albumPopup numberOfItems]);
+  DebugLog(@"Album list has %d elements", [albumPopup numberOfItems]);
 }
 
 - (IBAction)createAlbum:(id)sender
 {
 	[NSApp endSheet:albumDetailsWindow];
 	[albumDetailsWindow orderOut:self];
-  NSLog(@"createAlbum: %@", [sender description]);
+  DebugLog(@"createAlbum: %@", [sender description]);
   GDataEntryPhotoAlbum *newEntry = [GDataEntryPhotoAlbum albumEntry];
   // get the feed URL for the album we're inserting the photo into
   NSURL *feedURL = [[[self albumFeed] feedLink] URL];
-  NSLog(@"url: %@", [feedURL description]);
+  DebugLog(@"url: %@", [feedURL description]);
   [newEntry setTitleWithString:[albumTitleTextField stringValue]];
   [newEntry setSummaryWithString:[albumDescriptionTextView string]];
   if ([albumPublicButton state] == NSOnState) {
@@ -880,17 +894,18 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   }
   [newEntry setLocation:[albumLocationTextField stringValue]];
 
-  NSLog(@"getting picasa service");
+  DebugLog(@"getting picasa service");
   
   GDataServiceGooglePhotos *service = [self photoService];
   
-  NSLog(@"opening ticket");
+  DebugLog(@"opening ticket");
   // insert the entry into the album feed
-  GDataServiceTicket *ticket;
+  
   // If Aperture cancels, we immediately tell it to go ahead - but some callbacks may still
   // be running. Retain ourself so we can return from the callbacks and clean up correctly.
   [self retain]; 
-  ticket = [service fetchEntryByInsertingEntry:newEntry
+  
+   [service fetchEntryByInsertingEntry:newEntry
                                     forFeedURL:feedURL
                                       delegate:self
                              didFinishSelector:@selector(addAlbumTicket:finishedWithEntry:error:)];
@@ -904,7 +919,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 {
   [self release]; // Remove the retained.
   if (albumEntry) {
-    NSLog(@"album created!!!");
+    DebugLog(@"album created!!!");
     // tell the user that the add worked
     NSBeginAlertSheet(@"Success", nil, nil, nil,
                       [_exportManager window], nil, nil,
@@ -913,7 +928,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     _selectedAlbum = [albumEntry retain];
     [self updateChangeAlbumList];
   } else {
-  NSLog(@"album creation failed!!!");
+  DebugLog(@"album creation failed!!!");
   NSBeginAlertSheet(@"Add failed", nil, nil, nil,
                     [_exportManager window], nil, nil,
                     nil, nil, @"Album add failed: %@", error);
@@ -934,7 +949,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 	}
 	else
 	{
-    NSLog(@"uploadNextImage: %d images to go", [exportedImages count]);
+    DebugLog(@"uploadNextImage: %d images to go", [exportedImages count]);
 		// Read in our picture data
     APPicture *picture =  [exportedImages objectAtIndex:0];
     if ([self uploadPhoto:picture] == NO) {
@@ -963,7 +978,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 }
 
 - (BOOL)uploadPhoto:(APPicture*)picture {
-  NSLog(@"Loading picture %@ at %@", [picture title], [picture path]);
+  DebugLog(@"Loading picture %@ at %@", [picture title], [picture path]);
   if ([picture data]) {
     // make a new entry for the photo
     GDataEntryPhoto *newEntry = [GDataEntryPhoto photoEntry];
@@ -986,17 +1001,17 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 		  //Resolve which UTI the system thiks represents the specific file extension.
 		  CFStringRef UTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension,(CFStringRef)ext,NULL);
 		  //Convert the UTI to mime type
-		  CFStringRef mimeRef = UTTypeCopyPreferredTagWithClass(UTI,kUTTagClassMIMEType);
-		  
-		  mimeType = (NSString*)mimeRef;
+		  mimeType  = (NSString*)UTTypeCopyPreferredTagWithClass(UTI,kUTTagClassMIMEType);
+		  CFRelease(UTI);
 	  }  
 	  
-	  NSLog(@"File mime type is %@", mimeType);
+	DebugLog(@"File mime type is %@", mimeType);
+	
     [newEntry setPhotoMIMEType:mimeType];
     
     // get the feed URL for the album we're inserting the photo into
     NSURL *feedURL = [[_selectedAlbum feedLink] URL];
-    
+      
     GDataServiceGooglePhotos *service = [self photoService];
     
     // make service tickets call back into our upload progress selector
@@ -1004,17 +1019,18 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     [service setServiceUploadProgressSelector:progressSel];
     
     // insert the entry into the album feed
-    GDataServiceTicket *ticket;
-    NSLog(@"inserting picture in %@", [feedURL description]);
+
+    DebugLog(@"inserting picture in %@", [feedURL description]);
     // If Aperture cancels, we immediately tell it to go ahead - but some callbacks may still
     // be running. Retain ourself so we can return from the callbacks and clean up correctly.
     [self retain]; 
-    ticket = [service fetchEntryByInsertingEntry:newEntry
+    [service fetchEntryByInsertingEntry:newEntry
                                       forFeedURL:feedURL
                                         delegate:self
                                didFinishSelector:@selector(addPhotoTicket:finishedWithEntry:error:)];
-    // no need for future tickets to monitor progress
-    //[service setServiceUploadProgressSelector:nil];
+
+	//Not needed anymore by anyone.
+	  [mimeType release];
   } else {
     NSString *photoName = [[picture path] lastPathComponent];
     // nil data from photo file.
@@ -1029,7 +1045,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 - (void)uploadProgress:(GDataServiceTicketBase *)ticket
  hasDeliveredByteCount:(unsigned long long)numberOfBytesWritten
       ofTotalByteCount:(unsigned long long)dataLength {
-  NSLog(@"uploadProgress: %qu/%qu", numberOfBytesWritten, dataLength);
+  DebugLog(@"uploadProgress: %qu/%qu", numberOfBytesWritten, dataLength);
 }
   
 // photo added successfully
@@ -1042,7 +1058,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   APPicture *picture = [exportedImages objectAtIndex:0];
       
   if (photoEntry) {
-    NSLog(@"!!!!!!!!Added photo %@", [[photoEntry title] stringValue]);
+    DebugLog(@"!!!!!!!!Added photo %@", [[photoEntry title] stringValue]);
     
     // We may be run without disk picture writing. if we are saving at disk, exportedImages cound > 0.
     if ([exportedImages count] > 0) {
@@ -1050,12 +1066,12 @@ static const char kPicasaPath[]  = "data/feed/api/all";
       NSURL *postURL = [[photoEntry feedLink] URL];
       
       if ([picture uploadKeywords] && [[picture keywords] count] > 0) {
-        NSLog(@"%d keywords to add to %@", [[picture keywords] count], [[photoEntry title] stringValue]);
+        DebugLog(@"%d keywords to add to %@", [[picture keywords] count], [[photoEntry title] stringValue]);
         for (int i = 0; i < [[picture keywords] count]; ++i) {
           //NSString *keyword = [[picture keywords]componentsJoinedByString:@" "];
           NSString *keyword = [[picture keywords] objectAtIndex:i];
           GDataEntryPhotoTag* tag = [GDataEntryPhotoTag tagEntryWithString:keyword];
-          NSLog(@"Adding %@ to %@", [tag description], [postURL description]);
+          DebugLog(@"Adding %@ to %@", [tag description], [postURL description]);
           // Add tags. Let's ignore the result.
           [service fetchEntryByInsertingEntry:tag
                                    forFeedURL:postURL
@@ -1074,7 +1090,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
       [self _uploadNextImage];
     }
   } else {
-    NSLog(@"Added photo %@ failed: %@", [picture title], [error description]);
+    DebugLog(@"Added photo %@ failed: %@", [picture title], [error description]);
     // Don't bother showing error message if user has cancelled the operation.aiel
     if ([self shouldCancelExport] == NO) {
       APPicture *picture = [exportedImages objectAtIndex:0];
@@ -1167,7 +1183,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   _imageList = [aValue mutableCopy];
   [oldImageList release];
   
-  NSLog(@"Set %d images in list", [_imageList count]);
+  DebugLog(@"Set %d images in list", [_imageList count]);
   //[self setLoadingImages:NO];
 }
 
@@ -1195,13 +1211,13 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 - (int)quotaUsage
 {
-  NSLog(@"*********** Returning quota as %d", _quotaUsage);
+  DebugLog(@"*********** Returning quota as %d", _quotaUsage);
   return _quotaUsage;
 }
 
 - (void)setQuotaUsage:(int)aValue
 {
-  NSLog(@"Setting quota: %d", aValue);
+  DebugLog(@"Setting quota: %d", aValue);
   _quotaUsage = aValue;
 }
 
