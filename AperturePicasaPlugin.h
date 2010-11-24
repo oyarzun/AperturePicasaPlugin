@@ -22,7 +22,7 @@
 #import <Foundation/Foundation.h>
 #import "ApertureExportManager.h"
 #import "ApertureExportPlugIn.h"
-#import "GData/GData.h"
+#import <GData/GData.h>
 #import "GData/GDataFeedPhotoAlbum.h"
 #import "GData/GDataFeedPhoto.h"
 

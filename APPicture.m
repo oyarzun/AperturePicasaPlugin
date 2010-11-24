@@ -20,7 +20,6 @@
 
 #import "APPicture.h"
 
-
 @implementation APPicture
 
 - (id)init
