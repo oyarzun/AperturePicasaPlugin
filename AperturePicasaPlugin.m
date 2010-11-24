@@ -626,7 +626,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     //DebugLog(@"Password: %@", _password);
     if (_password && [_password length]) {
       [passwordField setStringValue:_password];
-      [self setAddToKeychain:FALSE]; 
+      [self setAddToKeychain:TRUE];  // Preserve the previous option.
     } else {
       DebugLog(@"Failed converting cstring password to  nsstring");
       keychainPasswordLength = 0;  // consider it failure.
