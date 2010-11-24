@@ -82,7 +82,7 @@
   BOOL _addToKeychain;
   
   // Minimum width to fit images + border.
-  float _tableColumnWidth;
+  CGFloat _tableColumnWidth;
   
   // Directory were images are temporarily kept.
 	NSString *tempDirectoryPath;
@@ -137,7 +137,7 @@
 - (void)setShouldCancelExport:(BOOL)shouldCancel;
 
 // Delegates
-- (float)tableView:(NSTableView *)tableView heightOfRow:(int)row;
+- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(int)row;
 - (void)tableViewSelectionIsChanging:(NSNotification *)aNotification;
 - (BOOL)addToKeychain;
 - (void)setAddToKeychain:(BOOL)aValue;

@@ -255,11 +255,11 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   DebugLog(@"willBeDeactivacted");
 }
 
-- (float)tableView:(NSTableView *)tableView heightOfRow:(int)row
+- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(int)row
 {
   NSSize imgSize = [[[[self imageList] objectAtIndex:row] defaultThumbnail] size];
   // If img gets resized, let's get the scaled valued.
-  if (imgSize.width == _tableColumnWidth || imgSize.width == 0.0) {
+  if (imgSize.width == _tableColumnWidth || imgSize.width == (CGFloat)0.0) {
     // No scale needed.
     return imgSize.height;
   }
@@ -268,8 +268,8 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 - (void)adjustTableInterface {
   NSSize size = [imageTableView intercellSpacing];
-  size.height += 20;
-  size.width += 20;
+  size.height += (CGFloat)20.0;
+  size.width += (CGFloat)20.0;
   [imageTableView setIntercellSpacing:size];
   _tableColumnWidth = [[[imageTableView tableColumns] objectAtIndex:0] width];
 }
