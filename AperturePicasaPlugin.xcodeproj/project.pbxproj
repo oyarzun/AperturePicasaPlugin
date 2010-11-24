@@ -48,7 +48,7 @@
 		32DBCF630370AF2F00C91783 /* AperturePicasaPlugin_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AperturePicasaPlugin_Prefix.pch; sourceTree = "<group>"; };
 		8D5B49B7048680CD000E48DA /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D118EA650AC08CCB006DD2FE /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/Localizable.strings; sourceTree = "<group>"; };
-		D118EB0F0AC08EAE006DD2FE /* AperturePicasa.ApertureExport */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AperturePicasa.ApertureExport; sourceTree = BUILT_PRODUCTS_DIR; };
+		D118EB0F0AC08EAE006DD2FE /* AperturePicasaPlugin.ApertureExport */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AperturePicasaPlugin.ApertureExport; sourceTree = BUILT_PRODUCTS_DIR; };
 		D15DEA490ABF639500CBE3A5 /* PluginManager.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PluginManager.framework; path = /Library/Frameworks/PluginManager.framework; sourceTree = "<absolute>"; };
 		D15DEA4D0ABF63C600CBE3A5 /* AperturePicasaPlugin.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = AperturePicasaPlugin.m; sourceTree = "<group>"; };
 		D15DEA4E0ABF63C600CBE3A5 /* AperturePicasaPlugin.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AperturePicasaPlugin.h; sourceTree = "<group>"; };
@@ -158,7 +158,7 @@
 		D118EB1C0AC08EE7006DD2FE /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				D118EB0F0AC08EAE006DD2FE /* AperturePicasa.ApertureExport */,
+				D118EB0F0AC08EAE006DD2FE /* AperturePicasaPlugin.ApertureExport */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -182,7 +182,7 @@
 			name = AperturePicasaPlugin;
 			productInstallPath = "$(HOME)/Library/Bundles";
 			productName = MyApertureExportPlugIn;
-			productReference = D118EB0F0AC08EAE006DD2FE /* AperturePicasa.ApertureExport */;
+			productReference = D118EB0F0AC08EAE006DD2FE /* AperturePicasaPlugin.ApertureExport */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
@@ -302,7 +302,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Library/Application Support/Aperture/Plug-Ins/Export/";
 				PREBINDING = NO;
-				PRODUCT_NAME = AperturePicasa;
+				PRODUCT_NAME = AperturePicasaPlugin;
 				SDKROOT = macosx10.5;
 				VALID_ARCHS = x86_64;
 				WRAPPER_EXTENSION = ApertureExport;
@@ -329,7 +329,7 @@
 				INSTALL_PATH = "$(HOME)/Library/Application Support/Aperture/Plug-Ins/Export/";
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
-				PRODUCT_NAME = AperturePicasa;
+				PRODUCT_NAME = AperturePicasaPlugin;
 				SDKROOT = macosx10.5;
 				VALID_ARCHS = x86_64;
 				WRAPPER_EXTENSION = ApertureExport;

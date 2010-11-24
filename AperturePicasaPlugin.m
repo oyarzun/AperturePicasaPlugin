@@ -34,7 +34,6 @@
 	#define DebugLog( s, ... ) 
 #endif
 
-
 @interface AperturePicasaPlugin(PrivateMethods)
 - (GDataServiceTicket *)albumFetchTicket;
 - (void)setAlbumFetchTicket:(GDataServiceTicket *)ticket;
@@ -609,24 +608,25 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     [self setUsername:username];
     DebugLog(@"Got saved username: %@", username);
   }
-  BOOL saveToKeychain = [defaults boolForKey:kUserDefaultSaveToKeychain];
+  BOOL savedToKeychain = [defaults boolForKey:kUserDefaultSaveToKeychain];
   
   char *keychainPassword = NULL;
   UInt32 keychainPasswordLength = 0;
   // Try to get the password from the keychain
-  if (saveToKeychain &&
+  if (savedToKeychain &&
       SecKeychainFindInternetPassword(NULL, strlen(kPicasaDomain), kPicasaDomain, 0, NULL,
                                       [username lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
                                       [username UTF8String], 
-                                      strlen(kPicasaPath), kPicasaPath, 0, kSecProtocolTypeHTTP,
+                                      strlen(kPicasaPath), kPicasaPath, 0,kSecProtocolTypeHTTP,
                                       kSecAuthenticationTypeDefault, &keychainPasswordLength,
-                                      (void*)&keychainPassword, NULL) == noErr) {
+                                      (void*)&keychainPassword, 
+                                      NULL) == noErr) {
     DebugLog(@"Found %d bytes of password", keychainPasswordLength);
     _password = [NSString stringWithFormat:@"%*.*s", keychainPasswordLength, keychainPasswordLength, keychainPassword];
     //DebugLog(@"Password: %@", _password);
     if (_password && [_password length]) {
       [passwordField setStringValue:_password];
-      [self setAddToKeychain:TRUE]; 
+      [self setAddToKeychain:FALSE]; 
     } else {
       DebugLog(@"Failed converting cstring password to  nsstring");
       keychainPasswordLength = 0;  // consider it failure.
@@ -636,7 +636,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   if ([username length] == 0 || keychainPasswordLength == 0) {
     [self authenticate];
   } else {
-    [self connectToPicasa:self];
+    [self fetchAllAlbums]; // No need to save keychain info
   }
 }
 
@@ -658,6 +658,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   [self exportManagerShouldCancelExport];
 }
 
+  // Rename this method to savePasswordToKeychain
 - (IBAction)connectToPicasa:(id)sender
 {
 	[NSApp endSheet:authenticationWindow];
@@ -669,16 +670,69 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   [defaults setObject:_username forKey:kUserDefaultUsername];
   if ([self addToKeychain]) {
     [defaults setBool:TRUE forKey:kUserDefaultSaveToKeychain];
+    SecKeychainItemRef itemRef;
+    OSStatus didFind = noErr;
     
-    OSStatus result = SecKeychainAddInternetPassword(NULL, strlen(kPicasaDomain), kPicasaDomain,
-                                                     0, NULL, [_username length],
-                                                     [_username UTF8String], 
-                                                     strlen(kPicasaPath), kPicasaPath, 0,
-                                                     kSecProtocolTypeHTTP,
-                                                     kSecAuthenticationTypeDefault,
-                                                     [_password lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
-                                                     (void*)[_password UTF8String], NULL);
-    DebugLog(@"Adding to keychain result %d", result);
+    // Find the Keychain item based upon the criteria.
+		didFind = SecKeychainFindInternetPassword(NULL, 
+                                              strlen(kPicasaDomain), kPicasaDomain, /* serverName */
+                                              0, NULL,  /* securityDomain */
+                                              [_username lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
+                                              [_username UTF8String], 
+                                              strlen(kPicasaPath), kPicasaPath,  /* path */
+                                              0,  /* port */
+                                              kSecProtocolTypeHTTP, /* protocol */
+                                              kSecAuthenticationTypeDefault,
+                                              0, NULL,							/* no password */
+                                              &itemRef);
+    OSStatus result;
+		if (didFind == noErr) {
+			SecKeychainAttribute attr;
+			SecKeychainAttributeList attrList;
+			
+			// The attribute we want is the account name
+			attr.tag = kSecAccountItemAttr;
+			attr.length = [_username lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+			attr.data = (void*)[_username UTF8String];
+			
+			attrList.count = 1;
+			attrList.attr = &attr;
+			
+			// Want to modify so that Keychain entry metadata is preserved.
+			result = SecKeychainItemModifyContent(itemRef, 
+                                            &attrList, 
+                                            [_password lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
+                                            (void*)[_password UTF8String]);
+		}	else {
+	  	// Didn't find an entry, so create a new one.
+			result = SecKeychainAddInternetPassword(NULL,
+                                              strlen(kPicasaDomain), kPicasaDomain, /* serverName */
+                                              0, NULL,  /* securityDomain */
+                                              [_username length], [_username UTF8String],			/* accountName */
+                                              strlen(kPicasaPath), kPicasaPath,		/* path */
+                                              0,								/* port */
+                                              kSecProtocolTypeHTTP,						/* protocol */
+                                              kSecAuthenticationTypeDefault,					/* authenticationType */
+                                              [_password lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
+                                              (void*)[_password UTF8String],
+                                              &itemRef);
+    }
+    CFRelease(itemRef);
+    if (result != errSecSuccess) {
+      NSString *errorMessage = [self _localizedStringForKey:@"AddToKeyChain"
+                                               defaultValue:@"There was an error saving the password to the keychain."];
+      CFStringRef secErrorMessage = SecCopyErrorMessageString(result, NULL);
+      
+      DebugLog(@"Error: %@: %d, %s", errorMessage, result, secErrorMessage);
+      NSAlert *alert = [NSAlert alertWithMessageText:errorMessage 
+                                       defaultButton:[self _localizedStringForKey:@"OK" defaultValue:@"OK"]
+                                     alternateButton:nil 
+                                         otherButton:nil 
+                           informativeTextWithFormat:@"Informative Message: %d, %s", result, secErrorMessage];
+      [alert setAlertStyle:NSCriticalAlertStyle];
+      [alert runModal];
+      CFRelease(secErrorMessage);
+    }
   }
     
   [self fetchAllAlbums];

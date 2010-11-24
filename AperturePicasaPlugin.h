@@ -108,7 +108,10 @@
 // Actions
 - (IBAction)cancelConnection:(id)sender;
 - (IBAction)cancelAuthentication:(id)sender;
+
+// Rename this action to savePasswordToKeychain
 - (IBAction)connectToPicasa:(id)sender;
+
 - (IBAction)createAlbum:(id)sender;
 - (IBAction)cancelCreateAlbum:(id)sender;
 - (IBAction)switchUser:(id)sender;
