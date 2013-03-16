@@ -210,7 +210,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     // can release them properly in dealloc
     NSBundle *myBundle = [NSBundle bundleForClass:[self class]];
     NSNib *myNib = [[NSNib alloc] initWithNibNamed:@"AperturePicasaPlugin" bundle:myBundle];
-    if ([myNib instantiateNibWithOwner:self topLevelObjects:&_topLevelNibObjects])  {
+    if ([myNib instantiateWithOwner:self topLevelObjects:&_topLevelNibObjects])  {
       [_topLevelNibObjects retain];
     }
     [myNib release];
