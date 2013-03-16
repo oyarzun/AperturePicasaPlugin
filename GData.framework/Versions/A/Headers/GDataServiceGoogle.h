@@ -25,7 +25,7 @@
 #define _EXTERN
 #define _INITIALIZE_AS(x) =x
 #else
-#define _EXTERN extern
+#define _EXTERN GDATA_EXTERN
 #define _INITIALIZE_AS(x)
 #endif
 
@@ -40,50 +40,67 @@ _EXTERN NSString* const kGDataServiceDefaultUser _INITIALIZE_AS(@"default");
 // The Auth token is stored in the response dict under this key.
 _EXTERN NSString* const kGDataServiceAuthTokenKey _INITIALIZE_AS(@"Auth");
 
+// additional server error info keys (capitalized to match the server's
+// response key)
+_EXTERN NSString* const kGDataServerInfoStringKey _INITIALIZE_AS(@"Info");
+
+_EXTERN NSString* const kGDataServerInfoInvalidSecondFactor _INITIALIZE_AS(@"InvalidSecondFactor");
+
 enum {
-  kGDataBadAuthentication = 403
+  kGDataBadAuthentication = 403,
+  kGDataExpectationFailed = 417
 };
 
 @interface NSDictionary (GDataServiceGoogleAdditions)
 // category to get auth info from the callback error's userInfo
 - (NSString *)authenticationError;
+- (NSString *)authenticationInfo;
 - (NSString *)captchaToken;
 - (NSURL *)captchaURL;
 @end
 
 @class GDataServiceGoogle;
+@class GDataServiceTicket;
+
+#if NS_BLOCKS_AVAILABLE
+typedef void (^GDataServiceGoogleCompletionHandler)(GDataServiceTicket *ticket, id object, NSError *error);
+typedef void (^GDataServiceGoogleFeedBaseCompletionHandler)(GDataServiceTicket *ticket, GDataFeedBase *feed, NSError *error);
+typedef void (^GDataServiceGoogleEntryBaseCompletionHandler)(GDataServiceTicket *ticket, GDataEntryBase *entry, NSError *error);
+#else
+typedef void *GDataServiceGoogleCompletionHandler;
+typedef void *GDataServiceGoogleFeedBaseCompletionHandler;
+typedef void *GDataServiceGoogleEntryBaseCompletionHandler;
+#endif
 
 // GDataServiceTicket is the version of a ticket that supports
 // Google authentication
 @interface GDataServiceTicket : GDataServiceTicketBase {
-  GDataHTTPFetcher *authFetcher_;
+ @private
+  GTMHTTPFetcher *authFetcher_;
   NSString *authToken_;
   NSDate *credentialDate_;
-
-  id authorizer_;
 }
 
 - (void)cancelTicket; // stops fetches in progress
 
-// ClientLogin support
-- (GDataHTTPFetcher *)authFetcher;
-- (void)setAuthFetcher:(GDataHTTPFetcher *)fetcher;
+// ClientLogin support; not used with OAuth 1 & 2 authorizers
+- (GTMHTTPFetcher *)authFetcher;
+- (void)setAuthFetcher:(GTMHTTPFetcher *)fetcher;
 
+// ClientLogin support; not used with OAuth 1 & 2 authorizers
 - (NSString *)authToken;
 - (void)setAuthToken:(NSString *)str;
 
+// ClientLogin support; not used with OAuth 1 & 2 authorizers
 - (NSDate *)credentialDate;
 - (void)setCredentialDate:(NSDate *)date;
 
-// OAuth support
-- (id)authorizer;
-- (void)setAuthorizer:(id)obj;
 @end
 
 // GDataServiceGoogle is the version of the service class that supports
 // Google authentication.
 @interface GDataServiceGoogle : GDataServiceBase {
-
+ @private
   // ClientLogin support
   NSString *captchaToken_;
   NSString *captchaAnswer_;
@@ -93,16 +110,13 @@ enum {
   // AuthSub support
   NSString *authSubToken_;
 
-  // OAuth support
-  id authorizer_;
-
   NSString *accountType_; // hosted or google
 
   NSString *signInDomain_;
 
   NSString *serviceID_; // typically supplied by the subclass overriding -serviceID
 
-  GDataHTTPFetcher *pendingAuthFetcher_;
+  GTMHTTPFetcher *pendingAuthFetcher_;
 
   NSDate *credentialDate_;
 
@@ -207,8 +221,13 @@ enum {
                          completionHandler:(void (^)(GDataServiceTicket *ticket, GDataFeedBase *feed, NSError *error))handler;
 
 // fetch an entry, authenticated
- - (GDataServiceTicket *)fetchEntryWithURL:(NSURL *)entryURL
+- (GDataServiceTicket *)fetchEntryWithURL:(NSURL *)entryURL
                          completionHandler:(void (^)(GDataServiceTicket *ticket, GDataEntryBase *entry, NSError *error))handler;
+
+// fetch an entry, authenticated, with specified class
+- (GDataServiceTicket *)fetchEntryWithURL:(NSURL *)entryURL
+                               entryClass:(Class)entryClass
+                        completionHandler:(void (^)(GDataServiceTicket *ticket, GDataEntryBase *entry, NSError *error))handler;
 
 // insert an entry, authenticated
 - (GDataServiceTicket *)fetchEntryByInsertingEntry:(GDataEntryBase *)entryToInsert
@@ -217,6 +236,12 @@ enum {
 
 // update an entry, authenticated
 - (GDataServiceTicket *)fetchEntryByUpdatingEntry:(GDataEntryBase *)entryToUpdate
+                                completionHandler:(void (^)(GDataServiceTicket *ticket, GDataEntryBase *entry, NSError *error))handler;
+
+// update an entry, authenticated (use this for updating via chunked uploads,
+// with the URL from the entry's uploadEditLink)
+- (GDataServiceTicket *)fetchEntryByUpdatingEntry:(GDataEntryBase *)entryToUpdate
+                                      forEntryURL:(NSURL *)entryURL
                                 completionHandler:(void (^)(GDataServiceTicket *ticket, GDataEntryBase *entry, NSError *error))handler;
 
 // delete an entry, authenticated
@@ -256,11 +281,6 @@ enum {
 - (NSString *)authSubToken;
 - (void)setAuthSubToken:(NSString *)str;
 
-// the authorizer object must implement
-// - (void)authorizeRequest:(NSMutableURLRequest *)request
-- (id)authorizer;
-- (void)setAuthorizer:(id)obj;
-
 + (NSString *)authorizationScope;
 
 // default account type is HOSTED_OR_GOOGLE
@@ -288,8 +308,8 @@ enum {
 // when the entries lack explicit root-level namespaces
 + (NSDictionary *)standardServiceNamespaces;
 
-- (GDataHTTPFetcher *)pendingAuthFetcher;
-- (void)setPendingAuthFetcher:(GDataHTTPFetcher *)fetcher;
+- (GTMHTTPFetcher *)pendingAuthFetcher;
+- (void)setPendingAuthFetcher:(GTMHTTPFetcher *)fetcher;
 
 // the date the credentials were set
 - (NSDate *)credentialDate;

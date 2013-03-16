@@ -27,7 +27,7 @@
 #define _EXTERN 
 #define _INITIALIZE_AS(x) =x
 #else
-#define _EXTERN extern
+#define _EXTERN GDATA_EXTERN
 #define _INITIALIZE_AS(x)
 #endif
 
@@ -56,22 +56,22 @@ _EXTERN NSString* const kGDataGoogleDocsFeedTypeRevisions      _INITIALIZE_AS(@"
 // utilities for making feed URLs
 //
 
-+ (NSURL *)docsFeedURLUsingHTTPS:(BOOL)shouldUseHTTPS;
++ (NSURL *)docsFeedURL;
 
-+ (NSURL *)folderContentsFeedURLForFolderID:(NSString *)resourceID
-                                   useHTTPS:(BOOL)shouldUseHTTPS;
++ (NSURL *)folderContentsFeedURLForFolderID:(NSString *)resourceID;
 
 + (NSURL *)docsURLForUserID:(NSString *)userID
                  visibility:(NSString *)visibility
                  projection:(NSString *)projection
                  resourceID:(NSString *)resourceID
                    feedType:(NSString *)feedType
-                 revisionID:(NSString *)revisionID
-                   useHTTPS:(BOOL)shouldUseHTTPS;
+                 revisionID:(NSString *)revisionID;
 
 + (NSURL *)docsUploadURL;
 
 + (NSURL *)metadataEntryURLForUserID:(NSString *)userID;
+
++ (NSURL *)changesFeedURLForUserID:(NSString *)userID;
 
 + (NSString *)serviceRootURLString;
 

@@ -26,7 +26,7 @@
 #define _EXTERN
 #define _INITIALIZE_AS(x) =x
 #else
-#define _EXTERN extern
+#define _EXTERN GDATA_EXTERN
 #define _INITIALIZE_AS(x)
 #endif
 
@@ -96,6 +96,9 @@ _EXTERN NSString* const kGDataQueryResultServiceDocument _INITIALIZE_AS(@"atom-s
 
 - (BOOL)shouldShowDeleted;
 - (void)setShouldShowDeleted:(BOOL)flag;
+
+- (BOOL)shouldRequireAllDeleted;
+- (void)setShouldRequireAllDeleted:(BOOL)flag;
 
 - (BOOL)shouldShowOnlyDeleted;
 - (void)setShouldShowOnlyDeleted:(BOOL)flag;

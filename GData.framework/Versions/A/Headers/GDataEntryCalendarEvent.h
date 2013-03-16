@@ -23,7 +23,6 @@
 #import "GDataWho.h"
 #import "GDataLink.h"
 #import "GDataExtendedProperty.h"
-#import "GDataGeo.h"
 
 #undef _EXTERN
 #undef _INITIALIZE_AS
@@ -31,7 +30,7 @@
 #define _EXTERN 
 #define _INITIALIZE_AS(x) =x
 #else
-#define _EXTERN extern
+#define _EXTERN GDATA_EXTERN
 #define _INITIALIZE_AS(x)
 #endif
 
@@ -53,6 +52,9 @@ _EXTERN NSString* const kGDataCategoryCalendarSettings _INITIALIZE_AS(@"http://s
 - (NSArray *)resourceProperties;
 - (void)setResourceProperties:(NSArray *)arr;
 - (void)addResourceProperty:(GDataResourceProperty *)obj;
+
+- (NSNumber *)numberOfAdditionalGuests; // int
+- (void)setNumberOfAdditionalGuests:(NSNumber *)num;
 @end
 
 @class GDataWebContent;
@@ -99,9 +101,6 @@ _EXTERN NSString* const kGDataCategoryCalendarSettings _INITIALIZE_AS(@"http://s
 
 - (BOOL)canAnyoneAddSelf; // default NO
 - (void)setCanAnyoneAddSelf:(BOOL)flag;
-
-- (GDataGeo *)geoLocation;
-- (void)setGeoLocation:(GDataGeo *)geo;
 
 - (NSNumber *)sequenceNumber; // int
 - (void)setSequenceNumber:(NSNumber *)num;

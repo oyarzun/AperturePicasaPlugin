@@ -27,7 +27,7 @@
 #define _EXTERN 
 #define _INITIALIZE_AS(x) =x
 #else
-#define _EXTERN extern
+#define _EXTERN GDATA_EXTERN
 #define _INITIALIZE_AS(x)
 #endif
 
@@ -45,6 +45,8 @@ _EXTERN NSString* const kGDataYouTubeSafeSearchNone     _INITIALIZE_AS(@"none");
 _EXTERN NSString* const kGDataYouTubeSafeSearchStrict   _INITIALIZE_AS(@"strict");
 _EXTERN NSString* const kGDataYouTubeSafeSearchModerate _INITIALIZE_AS(@"moderate");
 
+_EXTERN NSString* const kGDataYouTubeCaptionTrackFormatSubviewer  _INITIALIZE_AS(@"sbv");
+_EXTERN NSString* const kGDataYouTubeCaptionTrackFormatSubrip     _INITIALIZE_AS(@"srt");
 
 // http://code.google.com/apis/youtube/reference.html#Parameters
 
@@ -57,6 +59,9 @@ _EXTERN NSString* const kGDataYouTubeSafeSearchModerate _INITIALIZE_AS(@"moderat
 
 - (void)setFormat:(NSString *)str;
 - (NSString *)format;
+
+- (void)setCaptionTrackFormat:(NSString *)str;
+- (NSString *)captionTrackFormat;
 
 - (void)setTimePeriod:(NSString *)str;
 - (NSString *)timePeriod;
@@ -79,6 +84,13 @@ _EXTERN NSString* const kGDataYouTubeSafeSearchModerate _INITIALIZE_AS(@"moderat
 
 - (void)setHasCaptions:(BOOL)flag;
 - (BOOL)hasCaptions;
+
+- (void)setShouldRequire3D:(BOOL)flag;
+- (BOOL)shouldRequire3D;
+
+// put video entries into link elements for activity feed entries
+- (void)setShouldInline:(BOOL)flag;
+- (BOOL)shouldInline;
 
 - (void)setUploader:(NSString *)str;
 - (NSString *)uploader;

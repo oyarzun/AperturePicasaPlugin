@@ -21,7 +21,6 @@
 
 #import "GDataEntryBase.h"
 
-
 // We define constant symbols in the main entry class for the client service
 
 #undef _EXTERN
@@ -30,7 +29,7 @@
 #define _EXTERN 
 #define _INITIALIZE_AS(x) =x
 #else
-#define _EXTERN extern
+#define _EXTERN GDATA_EXTERN
 #define _INITIALIZE_AS(x)
 #endif
 
@@ -44,8 +43,8 @@ _EXTERN NSString* const kGDataCategoryFinancePosition     _INITIALIZE_AS(@"http:
 _EXTERN NSString* const kGDataCategoryFinanceTransaction  _INITIALIZE_AS(@"http://schemas.google.com/finance/2007#transaction");
 
 
-@class GDataPortfolioData;
-@class GDataFeedLink;
+#import "GDataPortfolioElements.h"
+#import "GDataFeedLink.h"
 
 @interface GDataEntryFinancePortfolio : GDataEntryBase
 

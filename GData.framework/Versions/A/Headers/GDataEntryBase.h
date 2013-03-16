@@ -30,7 +30,6 @@
 #import "GDataBatchStatus.h"
 #import "GDataBatchInterrupted.h"
 #import "GDataAtomPubControl.h"
-#import "GDataDateTime.h"
 #import "GDataLink.h"
 
 #undef _EXTERN
@@ -39,7 +38,7 @@
 #define _EXTERN
 #define _INITIALIZE_AS(x) =x
 #else
-#define _EXTERN extern
+#define _EXTERN GDATA_EXTERN
 #define _INITIALIZE_AS(x)
 #endif
 
@@ -50,6 +49,7 @@ _EXTERN NSString* const kGDataCategoryScheme _INITIALIZE_AS(@"http://schemas.goo
   // either uploadData_ or uploadFileHandle_ may be set, but not both
   NSData *uploadData_;
   NSFileHandle *uploadFileHandle_;
+  NSURL *uploadLocationURL_; // requires uploadFileHandle be set
   NSString *uploadMIMEType_;
   NSString *uploadSlug_; // for http slug (filename) header when uploading
   BOOL shouldUploadDataOnly_;
@@ -125,6 +125,10 @@ _EXTERN NSString* const kGDataCategoryScheme _INITIALIZE_AS(@"http://schemas.goo
 
 - (NSFileHandle *)uploadFileHandle;
 - (void)setUploadFileHandle:(NSFileHandle *)fileHandle;
+
+// The location URL is used to restart upload of a file handle
+- (NSURL *)uploadLocationURL;
+- (void)setUploadLocationURL:(NSURL *)url;
 
 - (NSString *)uploadMIMEType;
 - (void)setUploadMIMEType:(NSString *)str;

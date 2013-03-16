@@ -108,7 +108,7 @@
 #define _EXTERN
 #define _INITIALIZE_AS(x) =x
 #else
-#define _EXTERN extern
+#define _EXTERN GDATA_EXTERN
 #define _INITIALIZE_AS(x)
 #endif
 
@@ -132,11 +132,11 @@ _EXTERN NSString* const kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 
 #define GDATA_DEBUG_ASSERT_MIN_SERVICE_VERSION(versionString) \
   GDATA_DEBUG_ASSERT([self isServiceVersionAtLeast:versionString], \
-    @"%s requires newer version", _cmd)
+    @"%@ requires newer version", NSStringFromSelector(_cmd))
 
 #define GDATA_DEBUG_ASSERT_MAX_SERVICE_VERSION(versionString) \
   GDATA_DEBUG_ASSERT([self isServiceVersionAtMost:versionString], \
-    @"%s deprecated under v%@", _cmd, [self serviceVersion])
+    @"%@ deprecated under v%@", NSStringFromSelector(_cmd), [self serviceVersion])
 
 #define GDATA_DEBUG_ASSERT_MIN_SERVICE_V2() \
   GDATA_DEBUG_ASSERT_MIN_SERVICE_VERSION(@"2.0")
@@ -174,7 +174,7 @@ _EXTERN NSString* const kGDataNamespaceBatchPrefix _INITIALIZE_AS(@"batch");
 // and attributes of a GDataObject should be reported when -description
 // is called.
 
-enum GDataDescRecTypes {
+typedef enum GDataDescRecTypes {
   kGDataDescValueLabeled = 1,
   kGDataDescLabelIfNonNil,
   kGDataDescArrayCount,
@@ -183,12 +183,12 @@ enum GDataDescRecTypes {
   kGDataDescBooleanPresent,
   kGDataDescNonZeroLength,
   kGDataDescValueIsKeyPath
-};
+} GDataDescRecTypes;
 
 typedef struct GDataDescriptionRecord {
-  NSString *label;
-  NSString *keyPath;
-  enum GDataDescRecTypes reportType;
+  NSString GDATA_UNSAFE_UNRETAINED *label;
+  NSString GDATA_UNSAFE_UNRETAINED *keyPath;
+  GDataDescRecTypes reportType;
 } GDataDescriptionRecord;
 
 
@@ -199,7 +199,7 @@ typedef struct GDataDescriptionRecord {
   // element name from original XML, used for later XML generation
   NSString *elementName_;
 
-  GDataObject *parent_;  // WEAK, parent in tree of GData objects
+  GDataObject GDATA_UNSAFE_UNRETAINED *parent_;  // weak: parent in tree of GData objects
 
   // GDataObjects keep namespaces as {key:prefix value:URI} dictionary entries
   NSMutableDictionary *namespaces_;
@@ -259,6 +259,8 @@ typedef struct GDataDescriptionRecord {
 //
 // These methods are intended for users of the library
 //
+
++ (id)object;
 
 - (id)copyWithZone:(NSZone *)zone;
 
@@ -375,6 +377,7 @@ typedef struct GDataDescriptionRecord {
 - (NSString *)uploadMIMEType;
 - (NSData *)uploadData;
 - (NSFileHandle *)uploadFileHandle;
+- (NSURL *)uploadLocationURL;
 - (BOOL)shouldUploadDataOnly;
 
 //

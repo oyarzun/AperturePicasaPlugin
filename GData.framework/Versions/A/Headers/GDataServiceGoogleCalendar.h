@@ -27,21 +27,21 @@
 #define _EXTERN 
 #define _INITIALIZE_AS(x) =x
 #else
-#define _EXTERN extern
+#define _EXTERN GDATA_EXTERN
 #define _INITIALIZE_AS(x)
 #endif
 
 // default feed of calendars
-_EXTERN NSString* const kGDataGoogleCalendarDefaultFeed _INITIALIZE_AS(@"http://www.google.com/calendar/feeds/default");
+_EXTERN NSString* const kGDataGoogleCalendarDefaultFeed _INITIALIZE_AS(@"https://www.google.com/calendar/feeds/default");
 
 // owned calendars; supports inserting and deleting calendars
-_EXTERN NSString* const kGDataGoogleCalendarDefaultOwnCalendarsFeed _INITIALIZE_AS(@"http://www.google.com/calendar/feeds/default/owncalendars/full");
+_EXTERN NSString* const kGDataGoogleCalendarDefaultOwnCalendarsFeed _INITIALIZE_AS(@"https://www.google.com/calendar/feeds/default/owncalendars/full");
 
 // subscribed calendars; insert adds a subscription, delete removes a subscription
-_EXTERN NSString* const kGDataGoogleCalendarDefaultAllCalendarsFeed _INITIALIZE_AS(@"http://www.google.com/calendar/feeds/default/allcalendars/full");
+_EXTERN NSString* const kGDataGoogleCalendarDefaultAllCalendarsFeed _INITIALIZE_AS(@"https://www.google.com/calendar/feeds/default/allcalendars/full");
 
 // calendar events feed
-_EXTERN NSString* const kGDataGoogleCalendarDefaultPrivateFullFeed _INITIALIZE_AS(@"http://www.google.com/calendar/feeds/default/private/full");
+_EXTERN NSString* const kGDataGoogleCalendarDefaultPrivateFullFeed _INITIALIZE_AS(@"https://www.google.com/calendar/feeds/default/private/full");
 
 
 // QuickAdd:  
@@ -63,6 +63,10 @@ _EXTERN NSString* const kGDataGoogleCalendarDefaultPrivateFullFeed _INITIALIZE_A
 + (NSURL *)calendarFeedURLForUsername:(NSString *)username;
 
 + (NSURL *)settingsFeedURLForUsername:(NSString *)username;
+
++ (NSURL *)freeBusyURLForUsername:(NSString *)username;
+
++ (NSURL *)freeBusyURLForGroup:(NSString *)groupname;
 
 - (GDataServiceTicket *)fetchCalendarFeedForUsername:(NSString *)username
                                             delegate:(id)delegate

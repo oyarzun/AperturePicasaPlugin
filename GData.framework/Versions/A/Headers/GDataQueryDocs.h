@@ -30,7 +30,7 @@
 #define _EXTERN
 #define _INITIALIZE_AS(x) =x
 #else
-#define _EXTERN extern
+#define _EXTERN GDATA_EXTERN
 #define _INITIALIZE_AS(x)
 #endif
 
@@ -82,6 +82,9 @@ _EXTERN NSString* const kGDataQueryDocsStarred      _INITIALIZE_AS(@"starred");
 - (void)setEditedMaxDateTime:(GDataDateTime *)dateTime;
 - (GDataDateTime *)editedMaxDateTime;
 
+- (void)setShouldShowRootParentLink:(BOOL)flag;
+- (BOOL)shouldShowRootParentLink;
+
 // delete a document when deleting (default is moving to the trash on deleting)
 - (void)setShouldActuallyDelete:(BOOL)flag;
 - (BOOL)shouldActuallyDelete;
@@ -92,6 +95,9 @@ _EXTERN NSString* const kGDataQueryDocsStarred      _INITIALIZE_AS(@"starred");
 
 - (void)setShouldOCRUpload:(BOOL)flag;
 - (BOOL)shouldOCRUpload;
+
+- (void)setShouldCreateNewRevision:(BOOL)flag;
+- (BOOL)shouldCreateNewRevision;
 
 - (NSString *)sourceLanguage;
 - (void)setSourceLanguage:(NSString *)str;

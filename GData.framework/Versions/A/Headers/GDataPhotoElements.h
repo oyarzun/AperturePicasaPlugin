@@ -28,7 +28,7 @@
 #define _EXTERN 
 #define _INITIALIZE_AS(x) =x
 #else
-#define _EXTERN extern
+#define _EXTERN GDATA_EXTERN
 #define _INITIALIZE_AS(x)
 #endif
 
@@ -177,26 +177,6 @@ _EXTERN NSString* const kGDataPhotoStatusFailed  _INITIALIZE_AS(@"failed");
 // truncation flag for serach results, like
 // <gphoto:truncated>1<gphoto:truncated>
 @interface GDataPhotoTruncated : GDataValueElementConstruct <GDataExtension>
-@end
-
-//
-// V1 elements deprecated in V2
-//
-
-// URL-safe album name, like <gphoto:name>mytrip</gphoto:name>  
-@interface GDataPhotoName : GDataValueElementConstruct <GDataExtension>
-@end
-
-// photo position in album, like <gphoto:position>10</gphoto:position> 
-@interface GDataPhotoPosition : GDataValueElementConstruct <GDataExtension>
-@end
-
-// version string, like <gphoto:version>22838</gphoto:version> 
-@interface GDataPhotoVersion : GDataValueElementConstruct <GDataExtension>
-@end
-
-// client application name, like <gphoto:client>Picasa1.2</gphoto:client>
-@interface GDataPhotoClient : GDataValueElementConstruct <GDataExtension>
 @end
 
 #endif // !GDATA_REQUIRE_SERVICE_INCLUDES || GDATA_INCLUDE_PHOTOS_SERVICE

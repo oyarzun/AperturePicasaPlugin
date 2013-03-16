@@ -34,7 +34,7 @@
 #define _EXTERN
 #define _INITIALIZE_AS(x) =x
 #else
-#define _EXTERN extern
+#define _EXTERN GDATA_EXTERN
 #define _INITIALIZE_AS(x)
 #endif
 
@@ -44,7 +44,7 @@
 // for an appropriate match
 _EXTERN Class const kUseRegisteredEntryClass _INITIALIZE_AS(nil);
 
-@interface GDataFeedBase : GDataObject {
+@interface GDataFeedBase : GDataObject <NSFastEnumeration> {
 
   // generator is parsed manually to avoid comparison along with other
   // extensions
