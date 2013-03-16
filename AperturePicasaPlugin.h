@@ -22,7 +22,7 @@
 #import <Foundation/Foundation.h>
 #import "ApertureExportManager.h"
 #import "ApertureExportPlugIn.h"
-#import <GData/GData.h>
+#import "GData/GData.h"
 #import "GData/GDataFeedPhotoAlbum.h"
 #import "GData/GDataFeedPhoto.h"
 
@@ -85,7 +85,7 @@
   CGFloat _tableColumnWidth;
   
   // Directory were images are temporarily kept.
-	NSString *tempDirectoryPath;
+  NSString *tempDirectoryPath;
   
   // User information
   NSString *_username;
@@ -98,10 +98,11 @@
   NSString *mAlbumImageURLString;
   NSString *_projectName;
   int _quotaUsage;
-	GDataEntryPhotoAlbum *_selectedAlbum;
+  GDataEntryPhotoAlbum *_selectedAlbum;
+  GDataFeedPhotoAlbum *_selectedAlbumFeed;
   
-	// Upload tracking.
-	NSMutableArray *exportedImages;	
+  // Upload tracking.
+  NSMutableArray *exportedImages;	
   int _uploadedCount;
 }
 

@@ -8,7 +8,7 @@
 /*Copyright: 2006 Apple Computer, Inc. All rights reserved.*/
 
 
-#import <PluginManager/PROAPIAccessing.h>
+#import "PROAPIAccessing.h"
 #import "ApertureSDKCommon.h"
 #import "ApertureExportManager.h"
 

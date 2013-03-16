@@ -109,7 +109,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   NSString *informativeText = [createError localizedDescription];
   DebugLog(@"Error: %@: %@", errorMessage, informativeText);
   NSAlert *alert = [NSAlert alertWithMessageText:errorMessage defaultButton:[self _localizedStringForKey:@"OK" defaultValue:@"OK"]
-                                 alternateButton:nil otherButton:nil informativeTextWithFormat:informativeText];
+                                 alternateButton:nil otherButton:nil informativeTextWithFormat:@"%@",informativeText];
   [alert setAlertStyle:NSCriticalAlertStyle];
   [alert runModal];      
   [createError release];
@@ -270,7 +270,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   size.height += (CGFloat)20.0;
   size.width += (CGFloat)20.0;
   [imageTableView setIntercellSpacing:size];
-  _tableColumnWidth = [[[imageTableView tableColumns] objectAtIndex:0] width];
+  _tableColumnWidth = [(NSTableColumn*)[[imageTableView tableColumns] objectAtIndex:0] width];
 }
 
 - (void)tableViewSelectionIsChanging:(NSNotification *)aNotification {
@@ -342,6 +342,15 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   // user-entered values
   DebugLog(@"exportManagerShouldBeginExport to album %@", [_selectedAlbum title]);
   if (_authenticated && _selectedAlbum) {
+      // Set our progress before beginning export activity
+      [self lockProgress];
+      exportProgress.totalValue = [_exportManager imageCount];
+      exportProgress.currentValue = 0;
+      exportProgress.indeterminateProgress = NO;
+      exportProgress.message = [[self _localizedStringForKey:@"preparingImages"
+                                                defaultValue:@"Step 1/2: Preparing Images..."] retain];
+      [self unlockProgress];
+      
     [_exportManager shouldBeginExport];
   } else {
     NSString *errorMessage = @"Cannot export images";
@@ -357,7 +366,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
                                                                    defaultValue:@"OK"]
                                    alternateButton:nil
                                        otherButton:nil
-                         informativeTextWithFormat:informativeText];
+                         informativeTextWithFormat:@"%@",informativeText];
     [alert setAlertStyle:NSCriticalAlertStyle];
     [alert runModal];
   }
@@ -437,6 +446,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 	[self lockProgress];
 	_uploadedCount = 0;
 	exportProgress.currentValue = 0;
+    exportProgress.totalValue = [_exportManager imageCount];
 	[exportProgress.message autorelease];
 	exportProgress.message = [[self _localizedStringForKey:@"uploadingImages"
                                             defaultValue:@"Step 2 of 2: Uploading Images..."] retain];
@@ -723,12 +733,12 @@ static const char kPicasaPath[]  = "data/feed/api/all";
                                                defaultValue:@"There was an error saving the password to the keychain."];
       CFStringRef secErrorMessage = SecCopyErrorMessageString(result, NULL);
       
-      DebugLog(@"Error: %@: %d, %s", errorMessage, result, secErrorMessage);
+      DebugLog(@"Error: %@: %d, %@", errorMessage, result, secErrorMessage);
       NSAlert *alert = [NSAlert alertWithMessageText:errorMessage 
                                        defaultButton:[self _localizedStringForKey:@"OK" defaultValue:@"OK"]
                                      alternateButton:nil 
                                          otherButton:nil 
-                           informativeTextWithFormat:@"Informative Message: %d, %s", result, secErrorMessage];
+                           informativeTextWithFormat:@"Informative Message: %d, %@", result, secErrorMessage];
       [alert setAlertStyle:NSCriticalAlertStyle];
       [alert runModal];
       CFRelease(secErrorMessage);
@@ -745,6 +755,17 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   DebugLog(@"selected album: %@", [sender description]);
   if (albumEntry) {
     _selectedAlbum = albumEntry;
+      // fetch the photos feed
+      NSURL *feedURL = [[_selectedAlbum feedLink] URL];
+      if (feedURL) {
+          
+          GDataServiceGooglePhotos *service = [self photoService];
+          GDataServiceTicket *ticket;
+          ticket = [service fetchFeedWithURL:feedURL
+                                    delegate:self
+                           didFinishSelector:@selector(photosTicket:finishedWithFeed:error:)];
+          
+      }       
   }
 }
 
@@ -784,11 +805,11 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   static GDataServiceGooglePhotos* service = nil;
   
   if (!service) {
-    [GDataHTTPFetcher setIsLoggingEnabled:false];
+    [GTMHTTPFetcher setLoggingEnabled:false];
     service = [[GDataServiceGooglePhotos alloc] init];
     
     [service setUserAgent:@"AperturePicasaPlugin-1.1"];
-    [service setShouldCacheDatedData:YES];
+    [service setShouldCacheResponseData:YES];
     [service setServiceShouldFollowNextLinks:YES];
     NSArray *modes = [NSArray arrayWithObjects:
                       NSDefaultRunLoopMode, NSModalPanelRunLoopMode, nil];
@@ -846,7 +867,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 
 // finished album list successfully
 - (void)albumListFetchTicket:(GDataServiceTicket *)ticket
-            finishedWithFeed:(GDataFeedBase *)feed 
+            finishedWithFeed:(GDataFeedPhotoUser *)feed 
                        error:(NSError *)error {
   [self release]; // Remove the retained.
 	// Put away the sheet
@@ -863,14 +884,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     // TODO(eider): Create a list to hold all album entries
     [self updateChangeAlbumList];
     
-    // Set our progress before beginning export activity
-    [self lockProgress];
-    exportProgress.totalValue = [_exportManager imageCount];
-    exportProgress.currentValue = 0;
-    exportProgress.indeterminateProgress = NO;
-    exportProgress.message = [[self _localizedStringForKey:@"preparingImages"
-                                              defaultValue:@"Step 1/2: Preparing Images..."] retain];
-    [self unlockProgress];
+
     
     // we may have got an public access.
     [self setAuthenticated:([[passwordField stringValue] length] > 0)];
@@ -879,7 +893,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     NSString *informativeText = [error localizedDescription];
     DebugLog(@"Error: %@: %@", errorMessage, informativeText);
     NSAlert *alert = [NSAlert alertWithMessageText:errorMessage defaultButton:[self _localizedStringForKey:@"OK" defaultValue:@"OK"]
-                                   alternateButton:nil otherButton:nil informativeTextWithFormat:informativeText];
+                                   alternateButton:nil otherButton:nil informativeTextWithFormat:@"%@",informativeText];
     [alert setAlertStyle:NSCriticalAlertStyle];
     [alert runModal];
     // Try again!
@@ -893,7 +907,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   unsigned long long quotaLimit = [[feed quotaLimit] unsignedLongLongValue];
   if (!quotaLimit) quotaLimit = 1;
   unsigned long long quotaPct = (quotaUsed*100/quotaLimit);
-  DebugLog(@"quota used %ld quota limit %qu = %qu", quotaUsed, quotaLimit, quotaPct);
+  DebugLog(@"quota used %lld quota limit %qu = %qu", quotaUsed, quotaLimit, quotaPct);
   [self setQuotaUsage:quotaPct];
   //[self setUsername:[feed username]];
   
@@ -927,7 +941,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     [item setTarget:self];
     [item setRepresentedObject:albumEntry];
   }
-  DebugLog(@"Album list has %d elements", [albumPopup numberOfItems]);
+  DebugLog(@"Album list has %ld elements", [albumPopup numberOfItems]);
 }
 
 - (IBAction)createAlbum:(id)sender
@@ -1003,7 +1017,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 	}
 	else
 	{
-    DebugLog(@"uploadNextImage: %d images to go", [exportedImages count]);
+    DebugLog(@"uploadNextImage: %ld images to go", [exportedImages count]);
 		// Read in our picture data
     APPicture *picture =  [exportedImages objectAtIndex:0];
     if ([self uploadPhoto:picture] == NO) {
@@ -1016,7 +1030,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
                                        defaultButton:@"OK"
                                      alternateButton:nil
                                          otherButton:nil
-                           informativeTextWithFormat:informativeText];
+                           informativeTextWithFormat:@"%@",informativeText];
 			[alert setAlertStyle:NSCriticalAlertStyle];
 			[alert runModal];
 			
@@ -1026,6 +1040,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     [self lockProgress];
     exportProgress.message = [[NSString stringWithFormat:@"Step 2 of 2: Uploading picture %d / %d",
                                ++_uploadedCount, [_exportManager imageCount]] retain];
+    exportProgress.currentValue++;
     [self unlockProgress];
     
 	}
@@ -1062,9 +1077,13 @@ static const char kPicasaPath[]  = "data/feed/api/all";
 	DebugLog(@"File mime type is %@", mimeType);
 	
     [newEntry setPhotoMIMEType:mimeType];
-    
-    // get the feed URL for the album we're inserting the photo into
-    NSURL *feedURL = [[_selectedAlbum feedLink] URL];
+      
+    // the slug is just the upload file's filename
+    [newEntry setUploadSlug:[picture title]];
+               
+      
+    // get the upload URL for the album we're inserting the photo into
+    NSURL *uploadURL = [[_selectedAlbumFeed uploadLink] URL];
       
     GDataServiceGooglePhotos *service = [self photoService];
     
@@ -1074,12 +1093,12 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     
     // insert the entry into the album feed
 
-    DebugLog(@"inserting picture in %@", [feedURL description]);
+    DebugLog(@"inserting picture in %@", [uploadURL description]);
     // If Aperture cancels, we immediately tell it to go ahead - but some callbacks may still
     // be running. Retain ourself so we can return from the callbacks and clean up correctly.
     [self retain]; 
     [service fetchEntryByInsertingEntry:newEntry
-                                      forFeedURL:feedURL
+                                      forFeedURL:uploadURL
                                         delegate:self
                                didFinishSelector:@selector(addPhotoTicket:finishedWithEntry:error:)];
 
@@ -1094,6 +1113,20 @@ static const char kPicasaPath[]  = "data/feed/api/all";
     return NO;
   }  
   return YES;
+}
+
+
+// photo list fetch callback
+- (void)photosTicket:(GDataServiceTicket *)ticket
+    finishedWithFeed:(GDataFeedPhotoAlbum *)feed
+               error:(NSError *)error {
+    // Get the last uploaded picture.
+    //APPicture *picture = [exportedImages objectAtIndex:0];
+    if (error == nil) {    
+       _selectedAlbumFeed = [feed retain];
+    } else {
+       //DebugLog(@"Added photo %@ failed: %@", [picture title], [error description]);
+    }
 }
 
 - (void)uploadProgress:(GDataServiceTicketBase *)ticket
@@ -1111,7 +1144,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   // Get the last uploaded picture.
   APPicture *picture = [exportedImages objectAtIndex:0];
       
-  if (photoEntry) {
+  if (error == nil) {
     DebugLog(@"!!!!!!!!Added photo %@", [[photoEntry title] stringValue]);
     
     // We may be run without disk picture writing. if we are saving at disk, exportedImages cound > 0.
@@ -1120,7 +1153,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
       NSURL *postURL = [[photoEntry feedLink] URL];
       
       if ([picture uploadKeywords] && [[picture keywords] count] > 0) {
-        DebugLog(@"%d keywords to add to %@", [[picture keywords] count], [[photoEntry title] stringValue]);
+        DebugLog(@"%ld keywords to add to %@", [[picture keywords] count], [[photoEntry title] stringValue]);
         for (int i = 0; i < [[picture keywords] count]; ++i) {
           //NSString *keyword = [[picture keywords]componentsJoinedByString:@" "];
           NSString *keyword = [[picture keywords] objectAtIndex:i];
@@ -1156,7 +1189,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
                                                                      defaultValue:@"OK"]
                                      alternateButton:nil
                                          otherButton:nil
-                           informativeTextWithFormat:[error description]];
+                           informativeTextWithFormat:@"%@",[error description]];
       [alert setAlertStyle:NSCriticalAlertStyle];
       [alert runModal];
     }
@@ -1237,7 +1270,7 @@ static const char kPicasaPath[]  = "data/feed/api/all";
   _imageList = [aValue mutableCopy];
   [oldImageList release];
   
-  DebugLog(@"Set %d images in list", [_imageList count]);
+  DebugLog(@"Set %ld images in list", [_imageList count]);
   //[self setLoadingImages:NO];
 }
 
