@@ -15,7 +15,7 @@
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>1.0.1</string>
 	<key>CFBundleSignature</key>
 	<string>EIDR</string>
 	<key>CFBundleVersion</key>
@@ -43,11 +43,11 @@
 			<key>className</key>
 			<string>AperturePicasaPlugin</string>
 			<key>displayName</key>
-			<string>AperturePicasaPlugin</string>
+			<string>Picasa Web</string>
 			<key>group</key>
 			<string>616BA321-B4C2-49DF-8FD8-2E3392D2D240</string>
 			<key>helpURL</key>
-			<string>http://www.apple.com/aperture/</string>
+			<string>http://oyarzun.github.com/AperturePicasaPlugin</string>
 			<key>infoString</key>
 			<string>infoString</string>
 			<key>protocolNames</key>
