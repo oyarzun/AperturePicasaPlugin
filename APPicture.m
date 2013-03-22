@@ -33,6 +33,8 @@
 	
 	[self setUploadDescription:YES];
 	[self setUploadKeywords:YES];
+    [self setUploadExifInformation:YES];
+
   }
   return self;
 }
