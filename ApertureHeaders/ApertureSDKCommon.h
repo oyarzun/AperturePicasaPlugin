@@ -1,8 +1,9 @@
 /*!
    @header         ApertureSDKCommon.h
-   @copyright      2007-2008 Apple Inc.. All rights reserved.
 
 */
+
+/* Copyright 2007-2013 Apple Inc.  All rights reserved. */
 
 /*!
  @define			kExportKeyThumbnailImage
@@ -121,7 +122,7 @@
 #define kExportKeyWhiteBalanceTint @"kExportKeyWhiteBalanceTint"
 
 /*!
- @define			kkExportKeyIsRAWImage
+ @define			kExportKeyIsRAWImage
  @discussion		(New in Aperture 2.0) An NSNumber object specifying a Boolean value. YES indicates that this version is based off a RAW master file. NO indicates that the master file is not RAW.
  */
 #define kExportKeyIsRAWImage @"kExportKeyIsRAWImage"

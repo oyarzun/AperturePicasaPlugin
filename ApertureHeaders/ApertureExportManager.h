@@ -1,9 +1,10 @@
 /*!
 	@header			ApertureExportManager.h
-	@copyright		2006 Apple Inc. All rights reserved.
 	@abstract		Protocol declaration for Aperture's export interface. 
 	@discussion		Aperture export plug-ins use these methods to control the export process. Version 1.0.
 */
+
+/* Copyright 2006-2013 Apple Inc.  All rights reserved. */
 
 #import "ApertureSDKCommon.h"
 

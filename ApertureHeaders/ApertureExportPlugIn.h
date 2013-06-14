@@ -1,12 +1,10 @@
 /*!
 	@header		ApertureExportPlugIn.h	
 	@abstract	Protocol declaration for implementing an Aperture Export Plug-in.
-	@copyright	2006 Apple Inc. All rights reserved.
 	 
  */
 
-/*Copyright: 2006 Apple Computer, Inc. All rights reserved.*/
-
+/* Copyright 2006-2013 Apple Inc.  All rights reserved. */
 
 #import "PROAPIAccessing.h"
 #import "ApertureSDKCommon.h"
