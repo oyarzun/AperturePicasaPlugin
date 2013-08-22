@@ -994,6 +994,17 @@ static const char kPicasaPath[]  = "data/feed/api/all";
                       nil, nil, @"Added album %@.", 
                       [[albumEntry title] stringValue]);
     _selectedAlbum = [albumEntry retain];
+      // fetch the photos feed
+      NSURL *feedURL = [[_selectedAlbum feedLink] URL];
+      if (feedURL) {
+          
+          GDataServiceGooglePhotos *service = [self photoService];
+          GDataServiceTicket *ticket;
+          ticket = [service fetchFeedWithURL:feedURL
+                                    delegate:self
+                           didFinishSelector:@selector(photosTicket:finishedWithFeed:error:)];
+          
+      }
     [self updateChangeAlbumList];
   } else {
   DebugLog(@"album creation failed!!!");
